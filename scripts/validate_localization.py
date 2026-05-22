@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
@@ -207,13 +208,29 @@ def validate_data_files(root: Path) -> list[str]:
 
 
 def validate_shell_scripts(root: Path) -> list[str]:
+    bash_path = shutil.which("bash")
+    if bash_path is None:
+        # Fallback to common Git for Windows paths.
+        for candidate in (
+            r"C:\Program Files\Git\bin\bash.exe",
+            r"C:\Program Files\Git\usr\bin\bash.exe",
+            r"C:\Program Files (x86)\Git\bin\bash.exe",
+        ):
+            if Path(candidate).exists():
+                bash_path = candidate
+                break
+
+    if bash_path is None:
+        print("Warning: bash not found, skipping shell script validation.")
+        return []
+
     errors: list[str] = []
     for path in root.rglob("*.sh"):
         if ".venv" in path.parts or "node_modules" in path.parts:
             continue
         # Validate repo-local shell files with `bash -n`.
-        result = subprocess.run(  # nosec B603 B607
-            ["bash", "-n", str(path)],
+        result = subprocess.run(  # nosec B603
+            [bash_path, "-n", str(path)],
             capture_output=True,
             text=True,
             check=False,
