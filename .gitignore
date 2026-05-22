@@ -95,3 +95,6 @@ site/
 
 # Cached vendor binaries/assets for the website build (Tailwind CLI, Mermaid, fonts).
 scripts/.vendor-cache/
+
+# Personal learning reference — local only, not for sharing
+complete-learning-catalog.md
