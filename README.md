@@ -20,12 +20,13 @@
 
 ## 最近同步
 
-- **最近同步日期**：2026-05-20
-- **本轮参考范围**：`30d5ad5` -> `7e369ee`
+- **最近同步日期**：2026-05-23
+- **本轮参考范围**：`7e369ee` -> `46941a3`
 - **本次同步内容**：
-  - 审阅上游多语言目录的 logo 相对路径修正，确认修复点只影响 `ja/`、`uk/`、`vi/`、`zh/` 子目录 README
-  - 中文 fork 的根目录主线与模块入口原本就使用正确的 `../resources/` 路径，因此无需正文改动
-  - 仅更新同步记录，保持根目录中文默认入口和现有教程结构不变
+  - 同步 Claude Code `v2.1.145` 相关口径：`/usage-credits`、`/model` session-only 默认行为、`claude agents --json`
+  - 补充 `/run`、`/verify`、`/run-skill-generator` 三个 bundled skills，以及 Stop / SubagentStop hook 新字段
+  - 记录 Bash 裸环境变量 allowlist 自动批准漏洞已修复，避免中文用户继续按旧权限规则配置
+  - 审阅上游多语言目录 root-level logo 路径修正；本 fork 不维护额外多语言目录树，因此不引入对应子目录改动
 
 ---
 

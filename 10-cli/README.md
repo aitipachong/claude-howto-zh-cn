@@ -21,6 +21,7 @@ Claude Code 的 CLI 是最核心的使用入口。
 | `claude -r "session"` | 恢复指定 session |
 | `claude mcp` | 管理 MCP |
 | `claude agents` | 打开 Agent View，多 session 管理界面 |
+| `claude agents --json` | 以 JSON 输出 Agent View session 列表，适合脚本、状态栏和 session picker |
 | `claude plugin` | 管理 plugins |
 | `claude remote-control` | 启动远程控制 |
 | `claude auth status` | 查看登录状态 |
@@ -475,6 +476,7 @@ Windows 用户建议尽早确认自己使用的是：
 ### `claude agents` 视图
 
 从 `v2.1.139` 开始，`claude agents` 不只是列出 agents，而是打开一个多 session 管理界面。
+从 `v2.1.145` 开始，可以加 `--json` 输出机器可读列表，方便你接到 tmux 状态栏、自定义 session picker 或自动巡检脚本里。
 
 - 先熟练 `claude`、`claude -p`、`claude -c`、`claude -r`
 - 自动化从小任务开始

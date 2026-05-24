@@ -18,10 +18,10 @@
 |------|----------|----------|------------|------|
 | Slash Commands | 60+ | 8 | 非常适合 | [01-slash-commands/](01-slash-commands/) |
 | Memory | 7 类 | 3 | 非常适合 | [02-memory/](02-memory/) |
-| Skills | 5 个 bundled skills + 示例 | 多个 | 适合进阶 | [03-skills/](03-skills/) |
+| Skills | 9 个 bundled skills + 示例 | 多个 | 适合进阶 | [03-skills/](03-skills/) |
 | Subagents | 6 个内建 | 多个 | 适合进阶 | [04-subagents/](04-subagents/) |
 | MCP | 1 个内建生态入口 + 示例 | 多个 | 适合集成场景 | [05-mcp/](05-mcp/) |
-| Hooks | 26 个事件 | 9 | 适合自动化 | [06-hooks/](06-hooks/) |
+| Hooks | 29 个事件 | 9 | 适合自动化 | [06-hooks/](06-hooks/) |
 | Plugins | - | 3 | 适合团队级方案 | [07-plugins/](07-plugins/) |
 | Checkpoints | 内建 | 示例文档 | 新手必学 | [08-checkpoints/](08-checkpoints/) |
 | Advanced Features | 多项 | 示例文档 | 高阶再学 | [09-advanced-features/](09-advanced-features/) |
@@ -57,6 +57,7 @@ slash commands 是用户在 Claude Code 里主动输入的快捷操作，例如 
 | `/ultraplan` | 把计划起草交给浏览器里的云端会话 |
 | `/ultrareview` | 云端多代理代码审查 |
 | `/less-permission-prompts` | 分析调用记录并建议 allowlist |
+| `/usage-credits` | 配置额外用量额度；`/extra-usage` 仍可作为 alias 使用 |
 | `/branch` | 从当前对话分叉（某些版本中 `/fork` 仍可能可用） |
 
 ### 仓库里的示例命令
@@ -133,6 +134,22 @@ skills 是 Claude Code 会根据描述自动触发的复用能力。它们往往
 | `brand-voice` | `03-skills/brand-voice/` | 文案语气统一 |
 | `doc-generator` | `03-skills/doc-generator/` | 文档生成 |
 | `refactor` | `03-skills/refactor/` | 结构化重构 |
+
+### Claude Code 自带 bundled skills
+
+这些是 Claude Code 自带的 skills，不需要从本仓库复制安装：
+
+| 名称 | 典型用途 |
+|------|----------|
+| `/batch` | 跨大量文件批量执行同一类修改 |
+| `/claude-api` | 加载 Claude API / SDK 参考 |
+| `/debug` | 读取 debug log 并排查当前 session 问题 |
+| `/fewer-permission-prompts` | 扫描调用记录并建议更合理的 allowlist |
+| `/loop` | 按间隔重复执行 prompt |
+| `/run` | 启动当前项目，实际看改动是否跑起来 |
+| `/run-skill-generator` | 为项目生成 `/run` / `/verify` 所需的运行技能 |
+| `/simplify` | 从复用性、质量和效率角度审查改动 |
+| `/verify` | 构建、运行并观察应用，确认修复真的有效 |
 
 ### skill 结构
 
@@ -243,6 +260,7 @@ hooks 是事件驱动的自动化动作。适合这些场景：
 
 - `command`
 - `http`
+- `mcp_tool`
 - `prompt`
 - `agent`
 
@@ -284,8 +302,16 @@ memory 是 Claude Code 用来长期加载规则和上下文的机制。
 - `/proactive`
 - `/ultrareview`
 - `/less-permission-prompts`
+- `/usage-credits`
 - `/team-onboarding`
 - `/ultraplan`
+- `/goal`
+- `/scroll-speed`
+- `/run`
+- `/verify`
+- `/run-skill-generator`
+- `claude agents --json`
+- Stop / SubagentStop hook 的 `background_tasks` 和 `session_crons`
 - Voice Dictation
 - Channels
 - background tasks

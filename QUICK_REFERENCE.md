@@ -102,6 +102,9 @@ chmod +x ~/.claude/hooks/*.sh
 # 为新同事生成项目 onboarding guide
 /team-onboarding
 
+# 额外用量配置
+/usage-credits       # `/extra-usage` 仍可作为兼容 alias
+
 # 常见 permission mode
 claude --permission-mode default
 claude --permission-mode acceptEdits
@@ -115,6 +118,7 @@ claude --permission-mode bypassPermissions
 /branch                # 某些版本中 `/fork` 仍可作为兼容别名
 claude -c
 claude -r "session-name"
+claude agents --json   # 机器可读的 Agent View 列表
 ```
 
 ---
@@ -135,6 +139,7 @@ claude -r "session-name"
 | Ultraplan | 内建 | `/ultraplan <task>` | 云端起草复杂计划 |
 | Monitor Tool | 内建 | 监控后台命令 stdout 事件流 | 适合替代轮询 |
 | Print Mode | 内建 | `claude -p` | 脚本 / CI/CD |
+| Run / Verify Skills | bundled skills | `/run`、`/verify`、`/run-skill-generator` | 启动项目并确认改动真实可用 |
 
 ---
 
@@ -251,6 +256,7 @@ claude -p "Run tests" --permission-mode dontAsk
 - shell 命令
 - 环境变量
 - slash command / skill / plugin / subagent 的名称
+- hook 输入字段，例如 `background_tasks`、`session_crons`
 
 ---
 

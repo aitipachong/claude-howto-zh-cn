@@ -2,6 +2,29 @@
 
 > 本文件保留上游版本信息的时间顺序，但用中文补充阅读说明，方便中文用户快速判断“这个仓库最近同步了什么”。
 
+## 中文版同步 — 2026-05-23
+
+### 上游审阅
+
+- 核对上游范围：`7e369ee` → `46941a3`
+- 上游这轮重点：
+  - 修正多语言 root-level README 的 logo 相对路径
+  - 同步 Claude Code `v2.1.145`
+  - `/extra-usage` 主名称改为 `/usage-credits`，旧命令仍作为 alias 保留
+  - `/model` 默认只影响当前 session，选择模型后按 `d` 才写入后续 session 默认值
+  - 新增 bundled skills：`/run`、`/verify`、`/run-skill-generator`
+  - Stop / SubagentStop hook 输入新增 `background_tasks` 和 `session_crons`
+  - `claude agents` 新增 `--json`
+  - 修复 Bash 裸环境变量 allowlist 自动批准漏洞
+
+### 中文 fork 处理
+
+- 将会影响实际使用、安全边界和自动化脚本的变化改写成中文说明
+- 保留所有 slash command、CLI flag、JSON key、环境变量和权限规则标识原文
+- 补充根级 `pyproject.toml` 的 `jinja2` 依赖，确保固定的自动化测试命令无需额外 `--with jinja2` 也能覆盖网站构建测试
+- 不引入上游 `uk/`、`vi/`、`zh/` 等额外多语言目录改动，继续保持根目录中文主线结构
+- 更新 `README.md` 和 `UPSTREAM.md` 的最近同步记录
+
 ## 中文版同步 — 2026-05-20（补充）
 
 ### 上游审阅

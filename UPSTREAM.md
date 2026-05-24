@@ -5,7 +5,7 @@
 - 上游仓库：[`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto)
 - 上游分支：`main`
 - 本地化基线 commit：`0ca8c37c81918458e063739425c4740ca92c2db2`
-- 最近检查到的上游 commit：`7e369eefcb6f3a2bcf24c5ac40cd0c7517851108`
+- 最近检查到的上游 commit：`46941a38fc9a6beeca02b755a29110465de87059`
 - 上游许可证：[MIT License](LICENSE)
 
 ## 本仓库性质
@@ -61,6 +61,25 @@ uv run python scripts/validate_localization.py
    - 哪些内容暂时未同步
 
 ## 最近一次同步记录
+
+### 上游同步 — 2026-05-23
+
+- Reviewed upstream range: `7e369ee` → `46941a3`
+- 重点上游变化：
+  - 上游先修正 `uk/`、`vi/`、`zh/` 等多语言 root-level README 的 logo 相对路径
+  - Claude Code 教程覆盖更新到 `v2.1.145`
+  - `/extra-usage` 主名称改为 `/usage-credits`，旧名继续作为 alias 可用
+  - `/model` 选择默认只影响当前 session；选择后按 `d` 才会设置成后续 session 默认模型
+  - 新增 bundled skills：`/run`、`/verify`、`/run-skill-generator`
+  - Stop / SubagentStop hook 输入新增 `background_tasks` 和 `session_crons`
+  - `claude agents` 增加 `--json`，方便脚本、状态栏和 session picker 读取
+  - 修复 Bash 裸环境变量 allowlist 自动批准问题，`FOO=bar somecommand` 这类命令现在需要覆盖完整命令的 `Bash(...)` 权限规则
+- Chinese fork actions:
+  - 将影响真实使用、安全边界和自动化脚本的变化同步进中文主线文档
+  - 保留 `/usage-credits`、`/run`、`/verify`、`background_tasks`、`session_crons`、`Bash(...)` 等可执行标识原文
+  - 补充根级 `pyproject.toml` 的 `jinja2` 依赖，确保固定自动化测试命令能覆盖网站构建测试
+  - 不引入上游 `uk/`、`vi/`、`zh/` 等额外多语言目录改动，继续维护根目录中文默认入口
+  - 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
 
 ### 上游同步 — 2026-05-20（补充）
 

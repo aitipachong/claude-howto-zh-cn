@@ -37,7 +37,7 @@ Claude Code 里的 slash commands 大致分四类：
 | `/clear` | 清空当前会话 |
 | `/config` | 查看或编辑设置 |
 | `/context` | 看上下文使用情况 |
-| `/model` | 切换模型 |
+| `/model` | 切换模型；`v2.1.144+` 起默认只影响当前 session，选择后按 `d` 才设为后续默认 |
 | `/effort [low|medium|high|xhigh|max|auto]` | 用交互滑杆调整思考强度；Opus 4.7 默认是 `xhigh` |
 | `/agents` | 查看可用 agents |
 | `/skills` | 查看可用 skills |
@@ -61,10 +61,11 @@ Claude Code 里的 slash commands 大致分四类：
 | `/ultraplan` | 先产出详细计划，再在浏览器中审阅 |
 | `/ultrareview` | 用云端多代理做一轮更重的综合代码审查 |
 | `/usage` | 查看 plan 用量与限流状态 |
+| `/usage-credits` | 配置额外用量额度；`/extra-usage` 仍可作为 alias 使用 |
 
 这些命令不用安装，开箱即用。
 
-> 截至 2026 年 4 月，上游内建命令已经到了 **60+**。这里保留的是中国小白最该先掌握的一批。
+> 截至 2026 年 5 月，上游内建命令已经到了 **60+**，并且部分命令会继续改名或调整默认行为。这里保留的是中国小白最该先掌握的一批。
 
 ---
 
@@ -153,7 +154,7 @@ cp 01-slash-commands/optimize.md .claude/commands/
 
 ---
 
-## April 2026 这批命令变化，最值得知道什么
+## 2026 年 5 月这批命令变化，最值得知道什么
 
 - `/pr-comments` 已移除；现在更推荐直接让 Claude 查看 PR 评论
 - `/vim` 已移除；编辑器模式改从 `/config` 里设置
@@ -173,6 +174,8 @@ cp 01-slash-commands/optimize.md .claude/commands/
 - `/init` 的交互增强模式现在更常见的写法是 `CLAUDE_CODE_NEW_INIT=1`
 - `/goal` 新增，会把“这轮什么时候算完成”变成一个显式的 session 目标
 - `/scroll-speed` 新增，用来调 TUI live preview 的滚动速度，设置会按机器持久化
+- `/usage-credits` 成为额外用量配置的主名称；旧的 `/extra-usage` 仍然能用，但新文档建议写新名字
+- `/model` 现在默认只改当前 session 的模型；如果想设成以后新 session 的默认模型，选中后要按 `d`
 
 ---
 
