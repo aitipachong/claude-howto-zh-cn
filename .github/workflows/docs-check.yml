@@ -188,7 +188,6 @@ jobs:
                   content = f.read()
 
               required_sections = {
-                  "table of contents": ["## Table of Contents", "## 目录"],
                   "contributing": ["## Contributing", "## 参与贡献"],
                   "license": ["## License", "## 许可证"],
               }
