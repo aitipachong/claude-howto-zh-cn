@@ -1,6 +1,8 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["ebooklib", "markdown", "beautifulsoup4", "httpx", "pillow", "tenacity"]
+# dependencies = [
+#     "ebooklib", "markdown", "beautifulsoup4", "httpx", "pillow", "tenacity",
+# ]
 # ///
 """
 Build an EPUB from the Claude How-To markdown files.
@@ -46,12 +48,14 @@ import argparse
 import asyncio
 import base64
 import html
+import itertools
 import logging
 import os
 import re
 import sys
 import zlib
 from dataclasses import dataclass, field
+from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 
@@ -94,6 +98,80 @@ class CoverGenerationError(EPUBBuildError):
     """Error generating cover image."""
 
     pass
+
+
+# =============================================================================
+# Module-level Constants (avoid repeated object creation)
+# =============================================================================
+
+# Pre-compiled regex patterns
+_MERMAID_PATTERN = re.compile(r"```mermaid\n(.*?)```", flags=re.DOTALL)
+_SANITIZE_NUMBERED_LIST_RE = re.compile(r'\[(["\']?)(\d+)\.(\s)')
+
+# Hero template for README-to-EPUB transformation
+HERO_TEMPLATE = (
+    "![Claude How To 中文版 Logo](claude-howto-logo.png)\n\n"
+    "> 本书由 **一起 Vibe** 基于上游仓库 "
+    "[`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto) "
+    "翻译与本土化整理。\n\n"
+    "![一起 Vibe 小红书二维码](assets/cover/follow-qr.jpg)\n"
+)
+
+# Heading translation map for EPUB HTML generation
+HEADING_MAP = {
+    "Table of Contents": "目录",
+    "Contributing": "参与贡献",
+    "License": "许可证",
+    "Troubleshooting": "故障排查",
+    "Best Practices": "最佳实践",
+    "Features": "功能特性",
+    "Installation": "安装方式",
+    "What's Included": "包含内容",
+    "Requirements": "使用前提",
+    "Usage": "使用方式",
+    "Examples": "示例",
+    "Overview": "概览",
+    "Quick Start": "快速开始",
+    "Output Requirements": "输出要求",
+    "Summary": "总结",
+}
+
+# Media type mapping for embedded raster images
+_MEDIA_TYPE_MAP = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+}
+
+# EPUB stylesheet CSS
+_EPUB_CSS = """
+body { font-family: Georgia, serif; line-height: 1.6; padding: 1em; }
+h1 { color: #333; border-bottom: 2px solid #e67e22; padding-bottom: 0.3em; }
+h2 { color: #444; margin-top: 1.5em; }
+h3 { color: #555; }
+code {
+    background: #f4f4f4; padding: 0.2em 0.4em;
+    border-radius: 3px; font-family: monospace;
+}
+pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 5px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+th, td { border: 1px solid #ddd; padding: 0.5em; text-align: left; }
+th { background: #f4f4f4; }
+blockquote {
+    border-left: 4px solid #e67e22;
+    margin: 1em 0; padding-left: 1em; color: #666;
+}
+a { color: #e67e22; }
+img { max-width: 100%; height: auto; display: block; margin: 1em auto; }
+.diagram { text-align: center; margin: 1.5em 0; }
+.svg-placeholder {
+    border: 1px dashed #ccc; padding: 1em;
+    text-align: center; background: #f9f9f9;
+    border-radius: 4px; margin: 1em 0;
+}
+"""
 
 
 # =============================================================================
@@ -225,7 +303,9 @@ def validate_inputs(config: EPUBConfig, logger: logging.Logger) -> None:
     logo_path = config.logo_path or (config.root_path / "claude-howto-logo.png")
     if not cover_image_path.exists() and not logo_path.exists():
         logger.warning(
-            f"Cover image not found: {cover_image_path}, and logo not found: {logo_path}. Cover will be generated without branding assets."
+            f"Cover image not found: {cover_image_path}, "
+            f"and logo not found: {logo_path}. "
+            f"Cover will be generated without branding assets."
         )
 
     # Verify at least some markdown files exist
@@ -251,9 +331,7 @@ def sanitize_mermaid(mermaid_code: str) -> str:
     lists (e.g., "1. Item") inside node labels. This escapes the period
     to prevent that.
     """
-    # Escape numbered list patterns inside brackets: [1. Text] -> [1\. Text]
-    sanitized = re.sub(r'\[(["\']?)(\d+)\.(\s)', r"[\1\2\\.\3", mermaid_code)
-    return sanitized
+    return _SANITIZE_NUMBERED_LIST_RE.sub(r"[\1\2\\.\3", mermaid_code)
 
 
 class MermaidRenderer:
@@ -266,6 +344,7 @@ class MermaidRenderer:
         self.state = state
         self.logger = logger
         self._semaphore: asyncio.Semaphore | None = None
+        self._counter_lock = asyncio.Lock()
 
     async def _fetch_single(
         self, client: httpx.AsyncClient, mermaid_code: str, index: int
@@ -316,8 +395,9 @@ class MermaidRenderer:
             response = await client.get(url, timeout=self.config.request_timeout)
 
             if response.status_code == 200:
-                self.state.mermaid_counter += 1
-                img_name = f"mermaid_{self.state.mermaid_counter}.png"
+                async with self._counter_lock:
+                    self.state.mermaid_counter += 1
+                    img_name = f"mermaid_{self.state.mermaid_counter}.png"
                 result = (response.content, img_name)
                 cache_key = mermaid_code.strip()
                 self.state.mermaid_cache[cache_key] = result
@@ -357,9 +437,12 @@ class MermaidRenderer:
                 for idx, code in diagrams
             ]
 
-            self.logger.info(f"Fetching {len(tasks)} Mermaid diagrams concurrently...")
+            self.logger.info(
+                f"Fetching {len(tasks)} Mermaid diagrams concurrently..."
+            )
 
-            # Remote rendering is best-effort; unavailable diagrams remain as code blocks.
+            # Remote rendering is best-effort;
+            # unavailable diagrams remain as code blocks.
             completed = await asyncio.gather(*tasks)
 
             for item in completed:
@@ -377,17 +460,24 @@ class MermaidRenderer:
 
 def extract_all_mermaid_blocks(
     md_files: list[tuple[Path, str]], logger: logging.Logger
-) -> list[tuple[int, str]]:
-    """Extract all unique Mermaid code blocks from markdown files."""
-    pattern = r"```mermaid\n(.*?)```"
+) -> tuple[list[tuple[int, str]], dict[Path, str]]:
+    """Extract all unique Mermaid code blocks from markdown files.
+
+    Returns:
+        A tuple of (diagrams, file_content_cache).
+        file_content_cache maps file Path to file content string,
+        avoiding duplicate reads during chapter processing.
+    """
     seen: set[str] = set()
     diagrams: list[tuple[int, str]] = []
+    file_contents: dict[Path, str] = {}
     counter = 0
 
     for file_path, _ in md_files:
         try:
             content = file_path.read_text(encoding="utf-8")
-            for match in re.finditer(pattern, content, flags=re.DOTALL):
+            file_contents[file_path] = content
+            for match in _MERMAID_PATTERN.finditer(content):
                 code = match.group(1).strip()
                 if code not in seen:
                     seen.add(code)
@@ -397,7 +487,7 @@ def extract_all_mermaid_blocks(
             logger.warning(f"Failed to read {file_path}: {e}")
 
     logger.info(f"Found {len(diagrams)} unique Mermaid diagrams")
-    return diagrams
+    return diagrams, file_contents
 
 
 # =============================================================================
@@ -450,20 +540,19 @@ FOLDER_LABELS = {
 def extract_markdown_h1(file_path: Path) -> str | None:
     """Extract the first H1 outside fenced code blocks."""
     try:
-        content = file_path.read_text(encoding="utf-8")
+        with file_path.open(encoding="utf-8") as f:
+            in_fence = False
+            for raw_line in f:
+                line = raw_line.strip()
+                if line.startswith("```") or line.startswith("~~~"):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    continue
+                if line.startswith("# "):
+                    return line[2:].strip()
     except UnicodeDecodeError:
         return None
-
-    in_fence = False
-    for raw_line in content.splitlines():
-        line = raw_line.strip()
-        if line.startswith("```") or line.startswith("~~~"):
-            in_fence = not in_fence
-            continue
-        if in_fence:
-            continue
-        if line.startswith("# "):
-            return line[2:].strip()
     return None
 
 
@@ -496,44 +585,46 @@ def prepare_root_readme_for_epub(md_content: str) -> str:
     if first_rule_after_h1 is None:
         return md_content
 
-    hero = """![Claude How To 中文版 Logo](claude-howto-logo.png)
-
-> 本书由 **一起 Vibe** 基于上游仓库 [`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto) 翻译与本土化整理。
-
-![一起 Vibe 小红书二维码](assets/cover/follow-qr.jpg)
-"""
-
     heading = lines[h1_index]
     remainder = "\n".join(lines[first_rule_after_h1:]).lstrip()
-    return f"{heading}\n\n{hero}\n\n{remainder}"
+    return f"{heading}\n\n{HERO_TEMPLATE}\n\n{remainder}"
 
 
 def collect_folder_files(folder_path: Path) -> list[tuple[Path, str]]:
-    """Collect all markdown files from a folder, README first."""
+    """Collect all markdown files from a folder, README first.
+
+    Uses an explicit stack instead of recursion to avoid RecursionError
+    on deeply nested directory structures.
+    """
     files: list[tuple[Path, str]] = []
+    # Stack of (directory_to_process, accumulated_prefix)
+    stack: list[tuple[Path, str]] = [(folder_path, "")]
 
-    # Get README first if it exists
-    readme = folder_path / "README.md"
-    if readme.exists():
-        files.append((readme, infer_markdown_label(readme, "概览")))
+    while stack:
+        current_path, prefix = stack.pop()
 
-    # Get all other markdown files
-    for md_file in sorted(folder_path.glob("*.md")):
-        if md_file.name != "README.md":
-            title = infer_markdown_label(md_file, humanize_segment(md_file.stem))
-            files.append((md_file, title))
+        # Get README first if it exists
+        readme = current_path / "README.md"
+        if readme.exists():
+            label = infer_markdown_label(readme, "概览")
+            files.append((readme, f"{prefix}{label}" if prefix else label))
 
-    # Recursively get subfolders
-    for subfolder in sorted(folder_path.iterdir()):
-        if subfolder.is_dir() and not subfolder.name.startswith("."):
-            subfiles = collect_folder_files(subfolder)
-            for sf, st in subfiles:
-                rel_path = sf.relative_to(folder_path)
-                if len(rel_path.parts) > 1:
-                    prefix = humanize_segment(rel_path.parts[0])
-                    files.append((sf, f"{prefix}: {st}"))
-                else:
-                    files.append((sf, st))
+        # Get all other markdown files
+        for md_file in sorted(current_path.glob("*.md")):
+            if md_file.name != "README.md":
+                title = infer_markdown_label(md_file, humanize_segment(md_file.stem))
+                files.append((md_file, f"{prefix}{title}" if prefix else title))
+
+        # Queue subfolders (reverse to maintain sorted order with LIFO stack)
+        subfolders = [
+            subfolder
+            for subfolder in sorted(current_path.iterdir(), reverse=True)
+            if subfolder.is_dir() and not subfolder.name.startswith(".")
+        ]
+        for subfolder in subfolders:
+            segment = humanize_segment(subfolder.name)
+            new_prefix = f"{prefix}{segment}: " if prefix else f"{segment}: "
+            stack.append((subfolder, new_prefix))
 
     return files
 
@@ -626,8 +717,9 @@ class ChapterCollector:
 # =============================================================================
 
 
+@lru_cache(maxsize=8)
 def load_font(
-    font_paths: list[str], size: int, logger: logging.Logger
+    font_paths: tuple[str, ...], size: int, logger: logging.Logger
 ) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Load a font from a list of paths, with fallback to default."""
     for font_path in font_paths:
@@ -714,8 +806,8 @@ def create_cover_image(
         draw = ImageDraw.Draw(cover)
 
         # Load fonts once
-        title_font = load_font(config.title_font_paths, 72, logger)
-        subtitle_font = load_font(config.subtitle_font_paths, 24, logger)
+        title_font = load_font(tuple(config.title_font_paths), 72, logger)
+        subtitle_font = load_font(tuple(config.subtitle_font_paths), 24, logger)
 
         # Add logo if available
         logo_path = config.logo_path or (config.root_path / "claude-howto-logo.png")
@@ -765,24 +857,6 @@ def create_chapter_html(
     display_name: str, file_title: str, html_content: str, is_overview: bool = False
 ) -> str:
     """Create chapter HTML with proper escaping."""
-    heading_map = {
-        "Table of Contents": "目录",
-        "Contributing": "参与贡献",
-        "License": "许可证",
-        "Troubleshooting": "故障排查",
-        "Best Practices": "最佳实践",
-        "Features": "功能特性",
-        "Installation": "安装方式",
-        "What's Included": "包含内容",
-        "Requirements": "使用前提",
-        "Usage": "使用方式",
-        "Examples": "示例",
-        "Overview": "概览",
-        "Quick Start": "快速开始",
-        "Output Requirements": "输出要求",
-        "Summary": "总结",
-    }
-
     soup = BeautifulSoup(html_content, "html.parser")
     first_h1 = soup.find("h1")
     if first_h1 is not None:
@@ -790,9 +864,9 @@ def create_chapter_html(
 
     for heading in soup.find_all(["h2", "h3", "h4"]):
         text = heading.get_text(" ", strip=True)
-        if text in heading_map:
+        if text in HEADING_MAP:
             heading.clear()
-            heading.append(heading_map[text])
+            heading.append(HEADING_MAP[text])
 
     html_content = str(soup)
     safe_display = html.escape(display_name)
@@ -845,6 +919,14 @@ def handle_svg_image(src: str, alt: str, logger: logging.Logger) -> str:
     return placeholder
 
 
+def _attr_str(tag, attr: str, default: str = "") -> str:
+    """Safely get a string attribute from a BeautifulSoup tag."""
+    val = tag.get(attr, default)
+    if isinstance(val, list):
+        return str(val[0]) if val else default
+    return str(val) if val is not None else default
+
+
 def embed_local_raster_images(
     soup: BeautifulSoup,
     current_file: Path,
@@ -855,7 +937,7 @@ def embed_local_raster_images(
 ) -> None:
     """Embed local PNG/JPG images into the EPUB and rewrite their src."""
     for img in soup.find_all("img"):
-        src = img.get("src", "")
+        src = _attr_str(img, "src")
         if not src or src.startswith(("http://", "https://", "data:")):
             continue
         if src.endswith(".svg"):
@@ -874,12 +956,7 @@ def embed_local_raster_images(
         asset_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", asset_key)
         epub_path = f"images/{asset_name}"
         if asset_key not in state.embedded_assets:
-            media_type = {
-                ".png": "image/png",
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".webp": "image/webp",
-            }.get(source_path.suffix.lower())
+            media_type = _MEDIA_TYPE_MAP.get(source_path.suffix.lower())
             if media_type is None:
                 continue
             item = epub.EpubItem(
@@ -900,46 +977,51 @@ def embed_local_raster_images(
 # =============================================================================
 
 
+def _replace_mermaid_block(
+    match: re.Match[str],
+    book: epub.EpubBook,
+    state: BuildState,
+    logger: logging.Logger,
+) -> str:
+    """Replace a single mermaid code block with its rendered image."""
+    mermaid_code = sanitize_mermaid(match.group(1))
+    cache_key = mermaid_code.strip()
+
+    if cache_key in state.mermaid_cache:
+        img_data, img_name = state.mermaid_cache[cache_key]
+        # Only add image to book if not already added
+        if img_name not in state.mermaid_added_to_book:
+            img_item = epub.EpubItem(
+                uid=img_name.replace(".", "_"),
+                file_name=f"images/{img_name}",
+                media_type="image/png",
+                content=img_data,
+            )
+            book.add_item(img_item)
+            state.mermaid_added_to_book.add(img_name)
+        return f"\n![Diagram](images/{img_name})\n"
+    else:
+        logger.warning(
+            "Mermaid diagram was not rendered; keeping source block in EPUB."
+        )
+        return match.group(0)
+
+
 def process_mermaid_blocks(
     md_content: str, book: epub.EpubBook, state: BuildState, logger: logging.Logger
 ) -> str:
     """Find mermaid code blocks and replace with image references."""
-    pattern = r"```mermaid\n(.*?)```"
-
-    def replace_mermaid(match: re.Match[str]) -> str:
-        mermaid_code = sanitize_mermaid(match.group(1))
-        cache_key = mermaid_code.strip()
-
-        if cache_key in state.mermaid_cache:
-            img_data, img_name = state.mermaid_cache[cache_key]
-            # Only add image to book if not already added
-            if img_name not in state.mermaid_added_to_book:
-                img_item = epub.EpubItem(
-                    uid=img_name.replace(".", "_"),
-                    file_name=f"images/{img_name}",
-                    media_type="image/png",
-                    content=img_data,
-                )
-                book.add_item(img_item)
-                state.mermaid_added_to_book.add(img_name)
-            return f"\n![Diagram](images/{img_name})\n"
-        else:
-            logger.warning(
-                "Mermaid diagram was not rendered; keeping source block in EPUB."
-            )
-            return match.group(0)
-
-    return re.sub(pattern, replace_mermaid, md_content, flags=re.DOTALL)
+    return _MERMAID_PATTERN.sub(
+        lambda m: _replace_mermaid_block(m, book, state, logger), md_content
+    )
 
 
 def convert_internal_links(
-    html_content: str, current_file: Path, root_path: Path, state: BuildState
-) -> str:
+    soup: BeautifulSoup, current_file: Path, root_path: Path, state: BuildState
+) -> BeautifulSoup:
     """Convert markdown links to internal EPUB chapter links."""
-    soup = BeautifulSoup(html_content, "html.parser")
-
     for link in soup.find_all("a"):
-        href = link.get("href", "")
+        href = _attr_str(link, "href")
         if not href or href.startswith(("http://", "https://", "mailto:", "#")):
             continue
 
@@ -962,20 +1044,18 @@ def convert_internal_links(
             lookup_path = str(rel_to_root)
 
             # Try various path forms for matching
-            paths_to_try = [
+            for path in (
                 lookup_path,
                 lookup_path.rstrip("/"),
                 lookup_path + "/README.md"
                 if not lookup_path.endswith(".md")
                 else lookup_path,
-            ]
-
-            for path in paths_to_try:
+            ):
                 if path in state.path_to_chapter:
                     link["href"] = state.path_to_chapter[path] + anchor
                     break
 
-    return str(soup)
+    return soup
 
 
 def md_to_html(
@@ -1011,23 +1091,23 @@ def md_to_html(
         ],
     )
 
-    # Clean up any SVG references (they won't work in EPUB)
+    # Single BeautifulSoup parse for all DOM operations
     soup = BeautifulSoup(html_content, "html.parser")
+
+    # Clean up any SVG references (they won't work in EPUB)
     for img in soup.find_all("img"):
-        src = img.get("src", "")
+        src = _attr_str(img, "src")
         if src.endswith(".svg"):
-            alt = img.get("alt", "Image")
+            alt = _attr_str(img, "alt", "Image")
             placeholder = handle_svg_image(src, alt, logger)
             img.replace_with(BeautifulSoup(placeholder, "html.parser"))
 
     embed_local_raster_images(soup, current_file, root_path, book, state, logger)
 
-    html_content = str(soup)
+    # Convert internal links to EPUB chapter references (operates on same soup)
+    soup = convert_internal_links(soup, current_file, root_path, state)
 
-    # Convert internal links to EPUB chapter references
-    html_content = convert_internal_links(html_content, current_file, root_path, state)
-
-    return html_content
+    return str(soup)
 
 
 # =============================================================================
@@ -1037,28 +1117,11 @@ def md_to_html(
 
 def create_stylesheet() -> epub.EpubItem:
     """Create the EPUB stylesheet."""
-    style = """
-    body { font-family: Georgia, serif; line-height: 1.6; padding: 1em; }
-    h1 { color: #333; border-bottom: 2px solid #e67e22; padding-bottom: 0.3em; }
-    h2 { color: #444; margin-top: 1.5em; }
-    h3 { color: #555; }
-    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; font-family: monospace; }
-    pre { background: #f4f4f4; padding: 1em; overflow-x: auto; border-radius: 5px; }
-    pre code { background: none; padding: 0; }
-    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-    th, td { border: 1px solid #ddd; padding: 0.5em; text-align: left; }
-    th { background: #f4f4f4; }
-    blockquote { border-left: 4px solid #e67e22; margin: 1em 0; padding-left: 1em; color: #666; }
-    a { color: #e67e22; }
-    img { max-width: 100%; height: auto; display: block; margin: 1em auto; }
-    .diagram { text-align: center; margin: 1.5em 0; }
-    .svg-placeholder { border: 1px dashed #ccc; padding: 1em; text-align: center; background: #f9f9f9; border-radius: 4px; margin: 1em 0; }
-    """
     return epub.EpubItem(
         uid="style_nav",
         file_name="style/nav.css",
         media_type="text/css",
-        content=style,
+        content=_EPUB_CSS,
     )
 
 
@@ -1098,7 +1161,7 @@ async def build_epub_async(
     # Extract and pre-fetch all Mermaid diagrams
     logger.info("Extracting Mermaid diagrams...")
     md_files = [(ch.file_path, ch.file_title) for ch in chapter_infos]
-    all_diagrams = extract_all_mermaid_blocks(md_files, logger)
+    all_diagrams, file_content_cache = extract_all_mermaid_blocks(md_files, logger)
 
     if all_diagrams:
         renderer = MermaidRenderer(config, state, logger)
@@ -1107,19 +1170,18 @@ async def build_epub_async(
     # Process chapters
     logger.info("Processing chapters...")
     chapters: list[epub.EpubHtml] = []
-    toc: list[epub.EpubHtml | tuple[epub.Section, list[epub.EpubHtml]]] = []
-
-    current_folder: str | None = None
-    current_folder_chapters: list[epub.EpubHtml] = []
+    chapter_entries: list[tuple[epub.EpubHtml, str | None]] = []
 
     for chapter_info in chapter_infos:
-        try:
-            content = chapter_info.file_path.read_text(encoding="utf-8")
-        except UnicodeDecodeError as e:
-            logger.error(f"Failed to read {chapter_info.file_path}: {e}")
-            raise ValidationError(
-                f"Failed to read {chapter_info.file_path}: {e}"
-            ) from e
+        content = file_content_cache.get(chapter_info.file_path)
+        if content is None:
+            try:
+                content = chapter_info.file_path.read_text(encoding="utf-8")
+            except UnicodeDecodeError as e:
+                logger.error(f"Failed to read {chapter_info.file_path}: {e}")
+                raise ValidationError(
+                    f"Failed to read {chapter_info.file_path}: {e}"
+                ) from e
 
         logger.debug(
             f"Processing: {chapter_info.file_path.relative_to(config.root_path)}"
@@ -1144,33 +1206,18 @@ async def build_epub_async(
         chapter.add_item(nav_css)
         book.add_item(chapter)
         chapters.append(chapter)
+        chapter_entries.append((chapter, chapter_info.folder_name))
 
-        # Build TOC structure
-        if chapter_info.folder_name is None:
-            # Single file chapter
-            if current_folder is not None:
-                # Finish previous folder
-                toc.append(
-                    (epub.Section(current_folder), current_folder_chapters.copy())
-                )
-                current_folder_chapters.clear()
-                current_folder = None
-            toc.append(chapter)
+    # Build TOC structure using groupby
+    toc: list[epub.EpubHtml | tuple[epub.Section, list[epub.EpubHtml]]] = []
+    for folder_name, group in itertools.groupby(
+        chapter_entries, key=lambda entry: entry[1]
+    ):
+        group_chapters = [entry[0] for entry in group]
+        if folder_name is None:
+            toc.extend(group_chapters)
         else:
-            # Part of a folder
-            if current_folder != chapter_info.folder_name:
-                if current_folder is not None:
-                    # Finish previous folder
-                    toc.append(
-                        (epub.Section(current_folder), current_folder_chapters.copy())
-                    )
-                    current_folder_chapters.clear()
-                current_folder = chapter_info.folder_name
-            current_folder_chapters.append(chapter)
-
-    # Handle last folder
-    if current_folder is not None and current_folder_chapters:
-        toc.append((epub.Section(current_folder), current_folder_chapters))
+            toc.append((epub.Section(folder_name), group_chapters))
 
     # Set table of contents
     book.toc = toc

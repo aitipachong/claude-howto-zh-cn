@@ -18,11 +18,16 @@ from build_epub import (
     EPUBConfig,
     MermaidRenderer,
     ValidationError,
+    _attr_str,
+    collect_folder_files,
+    convert_internal_links,
     create_chapter_html,
     create_cover_image,
     extract_all_mermaid_blocks,
     extract_markdown_h1,
     get_chapter_order,
+    load_font,
+    md_to_html,
     prepare_root_readme_for_epub,
     process_mermaid_blocks,
     sanitize_mermaid,
@@ -242,7 +247,7 @@ graph LR
 """
         )
 
-        diagrams = extract_all_mermaid_blocks([(md_file, "Test")], logger)
+        diagrams, _ = extract_all_mermaid_blocks([(md_file, "Test")], logger)
 
         assert len(diagrams) == 2
         assert diagrams[0][0] == 1  # First diagram index
@@ -265,7 +270,7 @@ graph TD
         md_file1.write_text(f"# File 1\n\n{same_diagram}")
         md_file2.write_text(f"# File 2\n\n{same_diagram}")
 
-        diagrams = extract_all_mermaid_blocks(
+        diagrams, _ = extract_all_mermaid_blocks(
             [(md_file1, "Test1"), (md_file2, "Test2")], logger
         )
 
@@ -352,7 +357,9 @@ class TestChapterCollector:
 
         assert "README.md" in state.path_to_chapter
         assert "01-test-chapter" in state.path_to_chapter
-        assert "01-test-chapter/README.md" in state.path_to_chapter
+        # Use Path to handle Windows/Unix path separator differences
+        readme_key = str(Path("01-test-chapter") / "README.md")
+        assert readme_key in state.path_to_chapter
 
 
 # =============================================================================
@@ -524,6 +531,356 @@ class TestIntegration:
 
             assert result.exists()
             assert result.suffix == ".epub"
+
+
+# =============================================================================
+# Critical Issue 1: BeautifulSoup 重复解析
+# =============================================================================
+
+
+class TestSinglePassParsing:
+    """Tests for Critical Issue 1: BeautifulSoup should parse only once per file."""
+
+    def test_convert_internal_links_accepts_soup_object(self, tmp_path: Path) -> None:
+        """convert_internal_links 应该接收 BeautifulSoup 对象并返回 soup 对象。"""
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        state.path_to_chapter["README.md"] = "chap_01.xhtml"
+
+        # Use absolute paths like real code does
+        root_path = tmp_path.resolve()
+        current_file = root_path / "test.md"
+        current_file.write_text("test")
+
+        html = '<p><a href="README.md">Link</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+
+        result = convert_internal_links(soup, current_file, root_path, state)
+
+        assert isinstance(result, BeautifulSoup)
+        a_tag = result.find("a")
+        assert a_tag is not None
+        assert a_tag["href"] == "chap_01.xhtml"
+
+    def test_md_to_html_parses_soup_only_once(
+        self, tmp_path: Path, state: BuildState, logger: logging.Logger
+    ) -> None:
+        """md_to_html 中 BeautifulSoup 构造函数应该只被调用一次。"""
+        from unittest.mock import patch
+
+        from bs4 import BeautifulSoup
+
+        md_content = "# Test\n\n[Link](README.md)\n"
+        current_file = tmp_path / "test.md"
+        current_file.write_text(md_content)
+        root_path = tmp_path
+        book = epub.EpubBook()
+        state.path_to_chapter["README.md"] = "chap_01.xhtml"
+
+        with patch("build_epub.BeautifulSoup") as mock_bs:
+            mock_bs.side_effect = BeautifulSoup
+
+            md_to_html(md_content, current_file, root_path, book, state, logger)
+
+            assert mock_bs.call_count == 1, (
+                f"BeautifulSoup was called {mock_bs.call_count} times, expected 1"
+            )
+
+
+# =============================================================================
+# Critical Issue 2: 文件内容重复读取
+# =============================================================================
+
+
+class TestFileContentCaching:
+    """Tests for Critical Issue 2: File contents should be cached to avoid duplicate reads."""
+
+    def test_extract_mermaid_returns_content_cache(
+        self, tmp_path: Path, logger: logging.Logger
+    ) -> None:
+        """extract_all_mermaid_blocks 应该返回文件内容缓存字典。"""
+        md_file = tmp_path / "test.md"
+        content = "# Title\n\n```mermaid\ngraph TD\n    A --> B\n```\n"
+        md_file.write_text(content)
+
+        result = extract_all_mermaid_blocks([(md_file, "Test")], logger)
+
+        # 新返回格式: (diagrams, file_contents)
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+
+        _, file_contents = result
+        assert isinstance(file_contents, dict)
+        assert md_file in file_contents
+        assert file_contents[md_file] == content
+
+
+# =============================================================================
+# Critical Issue 3: mermaid_counter 竞态条件
+# =============================================================================
+
+
+class TestMermaidCounterThreadSafety:
+    """Tests for Critical Issue 3: mermaid_counter must be thread-safe under concurrency."""
+
+    def test_renderer_has_counter_lock(
+        self, config: EPUBConfig, state: BuildState, logger: logging.Logger
+    ) -> None:
+        """MermaidRenderer 应该有一个 asyncio.Lock 来保护 counter。"""
+        import asyncio
+
+        renderer = MermaidRenderer(config, state, logger)
+        assert hasattr(renderer, "_counter_lock")
+        assert isinstance(renderer._counter_lock, asyncio.Lock)
+
+    @pytest.mark.asyncio
+    async def test_concurrent_render_produces_unique_names(
+        self, config: EPUBConfig, state: BuildState, logger: logging.Logger
+    ) -> None:
+        """并发渲染多个 diagram 时, 图片名应该是唯一的 (无重复)。"""
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        renderer = MermaidRenderer(config, state, logger)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b"fake_png_data"
+
+        async def mock_get(*args, **kwargs):
+            await asyncio.sleep(0)  # yield control to create race condition window
+            return mock_response
+
+        mock_client = MagicMock()
+        mock_client.get = mock_get
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            diagrams = [(i, f"graph TD\n    A{i} --> B{i}") for i in range(20)]
+            await renderer.render_all(diagrams)
+
+        img_names = [name for _, name in state.mermaid_cache.values()]
+        assert len(img_names) == len(set(img_names)), (
+            f"发现重复图片名: {len(img_names)} total, {len(set(img_names))} unique"
+        )
+        assert state.mermaid_counter == 20
+
+
+# =============================================================================
+# Critical Issue 4: collect_folder_files 显式栈（非递归）
+# =============================================================================
+
+
+class TestCollectFolderFiles:
+    """Tests for collect_folder_files with explicit stack approach."""
+
+    def test_deeply_nested_folders_no_recursion_error(
+        self, tmp_path: Path
+    ) -> None:
+        """深层嵌套目录不应抛出 RecursionError。"""
+        deep = tmp_path
+        for i in range(10):
+            deep = deep / f"level{i}"
+            deep.mkdir()
+        (deep / "deep.md").write_text("# Deep Content")
+
+        result = collect_folder_files(tmp_path)
+
+        titles = [title for _, title in result]
+        assert any("Deep Content" in t for t in titles)
+
+    def test_subfolder_prefix_format(self, tmp_path: Path) -> None:
+        """子目录中的文件应有正确的前缀格式。"""
+        sub = tmp_path / "sub-folder"
+        sub.mkdir()
+        (sub / "file.md").write_text("# Sub File")
+
+        result = collect_folder_files(tmp_path)
+
+        titles = [title for _, title in result]
+        assert any(t == "Sub Folder: Sub File" for t in titles)
+
+    def test_nested_subfolder_prefix_stack(self, tmp_path: Path) -> None:
+        """多层嵌套子目录应累积正确的前缀。"""
+        level0 = tmp_path / "level0"
+        level0.mkdir()
+        level1 = level0 / "level1"
+        level1.mkdir()
+        (level1 / "nested.md").write_text("# Nested")
+
+        result = collect_folder_files(tmp_path)
+
+        titles = [title for _, title in result]
+        assert any("Level0: Level1: Nested" in t for t in titles)
+
+    def test_readme_first_in_subfolder(self, tmp_path: Path) -> None:
+        """子目录中的 README.md 应排在其他文件之前。"""
+        sub = tmp_path / "sub"
+        sub.mkdir()
+        (sub / "other.md").write_text("# Other")
+        (sub / "README.md").write_text("# Readme")
+
+        result = collect_folder_files(tmp_path)
+
+        paths = [str(f) for f, _ in result]
+        readme_idx = next(
+            (i for i, p in enumerate(paths) if "README" in p), None
+        )
+        other_idx = next(
+            (i for i, p in enumerate(paths) if "other" in p), None
+        )
+        assert readme_idx is not None
+        assert other_idx is not None
+        assert readme_idx < other_idx
+
+
+# =============================================================================
+# Critical Issue 5: _attr_str 新增辅助函数
+# =============================================================================
+
+
+class TestAttrStr:
+    """Tests for _attr_str helper function."""
+
+    def test_existing_string_attr(self) -> None:
+        """正常获取字符串属性值。"""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup('<img src="test.png" alt="Test">', "html.parser")
+        assert _attr_str(soup.find("img"), "src") == "test.png"
+        assert _attr_str(soup.find("img"), "alt") == "Test"
+
+    def test_missing_attr_returns_default(self) -> None:
+        """缺失的属性返回默认值。"""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup('<img src="test.png">', "html.parser")
+        assert _attr_str(soup.find("img"), "alt") == ""
+        assert _attr_str(soup.find("img"), "alt", "fallback") == "fallback"
+
+    def test_list_value_returns_first(self) -> None:
+        """属性值为列表时返回第一个元素。"""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup("<div></div>", "html.parser")
+        tag = soup.find("div")
+        tag.attrs["data-list"] = ["a", "b", "c"]  # type: ignore[assignment]
+        assert _attr_str(tag, "data-list") == "a"
+
+    def test_empty_list_returns_default(self) -> None:
+        """空列表返回默认值。"""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup("<div></div>", "html.parser")
+        tag = soup.find("div")
+        tag.attrs["data-list"] = []  # type: ignore[assignment]
+        assert _attr_str(tag, "data-list", "default") == "default"
+
+
+# =============================================================================
+# Critical Issue 6: load_font 增加 @lru_cache
+# =============================================================================
+
+
+class TestLoadFontCache:
+    """Tests for load_font with @lru_cache."""
+
+    def test_caches_same_args(self, logger: logging.Logger) -> None:
+        """相同参数应返回缓存的同一对象。"""
+        load_font.cache_clear()
+        font_paths = ("nonexistent.ttf",)
+
+        result1 = load_font(font_paths, 12, logger)
+        result2 = load_font(font_paths, 12, logger)
+
+        assert result1 is result2
+
+    def test_different_size_bypasses_cache(self, logger: logging.Logger) -> None:
+        """不同字号应返回不同对象。"""
+        load_font.cache_clear()
+        font_paths = ("nonexistent.ttf",)
+
+        result1 = load_font(font_paths, 12, logger)
+        result2 = load_font(font_paths, 24, logger)
+
+        assert result1 is not result2
+
+
+# =============================================================================
+# Critical Issue 7: extract_markdown_h1 逐行读取与异常处理
+# =============================================================================
+
+
+class TestMarkdownH1LineByLine:
+    """Tests for extract_markdown_h1 with line-by-line reading."""
+
+    def test_extract_markdown_h1_unicode_decode_error(
+        self, tmp_path: Path
+    ) -> None:
+        """非 UTF-8 文件应返回 None 而不是抛出异常。"""
+        md = tmp_path / "bad.md"
+        md.write_bytes(b"\xff\xfe# Title\n")
+
+        assert extract_markdown_h1(md) is None
+
+    def test_extract_markdown_h1_large_file(self, tmp_path: Path) -> None:
+        """大文件逐行读取应正确找到 H1。"""
+        md = tmp_path / "large.md"
+        lines = ["paragraph line"] * 1000
+        lines[500] = "# The Real Title"
+        md.write_text("\n".join(lines), encoding="utf-8")
+
+        assert extract_markdown_h1(md) == "The Real Title"
+
+    def test_extract_markdown_h1_no_h1(self, tmp_path: Path) -> None:
+        """没有 H1 的文件应返回 None。"""
+        md = tmp_path / "no_h1.md"
+        md.write_text("## H2\n\nSome text\n", encoding="utf-8")
+
+        assert extract_markdown_h1(md) is None
+
+
+# =============================================================================
+# Critical Issue 8: build_epub_async 使用 file_content_cache
+# =============================================================================
+
+
+class TestFileContentCacheIntegration:
+    """Integration tests for file_content_cache in build_epub_async."""
+
+    @pytest.mark.asyncio
+    async def test_build_uses_cached_content_with_mermaid(
+        self, tmp_path: Path, logger: logging.Logger
+    ) -> None:
+        """有 Mermaid 块时，build_epub_async 应正确使用 file_content_cache。"""
+        from build_epub import build_epub_async
+        from PIL import Image as PILImage
+        from unittest.mock import patch
+
+        readme = tmp_path / "README.md"
+        readme.write_text(
+            "# Test\n\n```mermaid\ngraph TD\n    A --> B\n```\n"
+        )
+        logo = tmp_path / "claude-howto-logo.png"
+        PILImage.new("RGB", (100, 100)).save(logo, "PNG")
+
+        config = EPUBConfig(
+            root_path=tmp_path,
+            output_path=tmp_path / "test.epub",
+        )
+
+        with patch("build_epub.MermaidRenderer.render_all") as mock_render:
+            mock_render.return_value = {}
+
+            with patch("build_epub.get_chapter_order") as mock_order:
+                mock_order.return_value = [("README.md", "Introduction")]
+
+                result = await build_epub_async(config, logger)
+
+                assert result.exists()
+                assert result.suffix == ".epub"
 
 
 # =============================================================================
