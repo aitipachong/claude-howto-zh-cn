@@ -17,8 +17,8 @@
 
 ## 提交前请先看
 
-- [UPSTREAM.md](UPSTREAM.md)
-- [LOCALIZATION-STYLE.md](LOCALIZATION-STYLE.md)
+- [UPSTREAM.md](docs/project/UPSTREAM.md)
+- [LOCALIZATION-STYLE.md](docs/contributing/LOCALIZATION-STYLE.md)
 
 ## 本地验证
 

@@ -6,7 +6,7 @@
 - 上游分支：`main`
 - 本地化基线 commit：`0ca8c37c81918458e063739425c4740ca92c2db2`
 - 最近检查到的上游 commit：`46941a38fc9a6beeca02b755a29110465de87059`
-- 上游许可证：[MIT License](LICENSE)
+- 上游许可证：[MIT License](../../LICENSE)
 
 ## 本仓库性质
 

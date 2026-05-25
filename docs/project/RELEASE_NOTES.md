@@ -56,5 +56,5 @@ uv run pytest scripts/tests/ -q
 ## 说明
 
 - 本项目为 **非官方中文本土化 fork**
-- 来源与同步策略见 `UPSTREAM.md`
-- 本地化边界与术语规则见 `LOCALIZATION-STYLE.md`
+- 来源与同步策略见 [UPSTREAM.md](UPSTREAM.md)
+- 本地化边界与术语规则见 [LOCALIZATION-STYLE.md](../contributing/LOCALIZATION-STYLE.md)

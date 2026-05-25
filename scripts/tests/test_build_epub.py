@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 from unittest.mock import patch
@@ -23,9 +24,11 @@ from build_epub import (
     convert_internal_links,
     create_chapter_html,
     create_cover_image,
+    create_stylesheet,
     extract_all_mermaid_blocks,
     extract_markdown_h1,
     get_chapter_order,
+    handle_svg_image,
     load_font,
     md_to_html,
     prepare_root_readme_for_epub,
@@ -881,6 +884,350 @@ class TestFileContentCacheIntegration:
 
                 assert result.exists()
                 assert result.suffix == ".epub"
+
+
+# =============================================================================
+# Additional Coverage Tests
+# =============================================================================
+
+
+class TestSanitizeMermaidEdgeCases:
+    """Additional tests for sanitize_mermaid edge cases."""
+
+    def test_no_numbered_list_no_change(self) -> None:
+        input_code = "A --> B --> C --> D"
+        assert sanitize_mermaid(input_code) == input_code
+
+    def test_single_quoted_number(self) -> None:
+        input_code = "A['1. Item'] --> B"
+        assert sanitize_mermaid(input_code) == "A['1\\. Item'] --> B"
+
+    def test_double_quoted_number(self) -> None:
+        input_code = 'A["1. Item"] --> B'
+        assert sanitize_mermaid(input_code) == 'A["1\\. Item"] --> B'
+
+    def test_no_change_for_non_list_patterns(self) -> None:
+        input_code = "A[2024-01-01] --> B[v1.2.3]"
+        assert sanitize_mermaid(input_code) == input_code
+
+
+class TestExtractMermaidBlocksEdgeCases:
+    """Tests for extract_all_mermaid_blocks edge cases."""
+
+    def test_unicode_decode_error_handled(
+        self, tmp_path: Path, logger: logging.Logger
+    ) -> None:
+        bad_file = tmp_path / "bad.md"
+        bad_file.write_bytes(b"\xff\xfe")
+
+        diagrams, file_contents = extract_all_mermaid_blocks(
+            [(bad_file, "Test")], logger
+        )
+
+        assert diagrams == []
+        assert bad_file not in file_contents
+
+
+class TestChapterOrder:
+    """Tests for get_chapter_order."""
+
+    def test_returns_ordered_list(self) -> None:
+        order = get_chapter_order()
+        assert isinstance(order, list)
+        assert len(order) > 0
+        assert order[0][0] == "README.md"
+
+    def test_all_items_are_tuples(self) -> None:
+        order = get_chapter_order()
+        for item in order:
+            assert isinstance(item, tuple)
+            assert len(item) == 2
+
+
+class TestHumanizeSegment:
+    """Tests for humanize_segment."""
+
+    def test_known_folder_label(self) -> None:
+        from build_epub import humanize_segment
+
+        assert humanize_segment("code-review") == "代码审查"
+        assert humanize_segment("pr-review") == "PR 审查"
+
+    def test_unknown_segment_title_case(self) -> None:
+        from build_epub import humanize_segment
+
+        assert humanize_segment("my-folder") == "My Folder"
+        assert humanize_segment("my_file") == "My File"
+
+
+class TestInferMarkdownLabel:
+    """Tests for infer_markdown_label."""
+
+    def test_prefers_h1(self, tmp_path: Path) -> None:
+        from build_epub import infer_markdown_label
+
+        md = tmp_path / "test.md"
+        md.write_text("# Real Title\n\nBody\n", encoding="utf-8")
+        assert infer_markdown_label(md, "Fallback") == "Real Title"
+
+    def test_falls_back_when_no_h1(self, tmp_path: Path) -> None:
+        from build_epub import infer_markdown_label
+
+        md = tmp_path / "test.md"
+        md.write_text("## H2\n\nBody\n", encoding="utf-8")
+        assert infer_markdown_label(md, "Fallback") == "Fallback"
+
+
+class TestPrepareRootReadmeEdgeCases:
+    """Tests for prepare_root_readme_for_epub edge cases."""
+
+    def test_no_h1_returns_unchanged(self) -> None:
+        content = "Some text without heading\n"
+        result = prepare_root_readme_for_epub(content)
+        assert result == content
+
+    def test_no_rule_after_h1_returns_unchanged(self) -> None:
+        content = "# Title\n\nSome content\n\nMore content\n"
+        result = prepare_root_readme_for_epub(content)
+        assert result == content
+
+
+class TestChapterCollectorEdgeCases:
+    """Tests for ChapterCollector edge cases."""
+
+    def test_empty_folder_returns_empty(self, tmp_project: Path, state: BuildState) -> None:
+        empty_dir = tmp_project / "empty-chapter"
+        empty_dir.mkdir()
+        collector = ChapterCollector(tmp_project, state)
+        chapters = collector.collect_all_chapters([("empty-chapter", "Empty")])
+        assert chapters == []
+
+    def test_nonexistent_file_skipped(self, tmp_project: Path, state: BuildState) -> None:
+        collector = ChapterCollector(tmp_project, state)
+        chapters = collector.collect_all_chapters([("nonexistent.md", "Missing")])
+        assert chapters == []
+
+
+class TestCoverGenerationFallbacks:
+    """Tests for cover image generation fallback paths."""
+
+    def test_generated_cover_without_logo(self, tmp_path: Path, logger: logging.Logger) -> None:
+        """Should generate a text-only cover when no logo exists."""
+        config = EPUBConfig(
+            root_path=tmp_path,
+            output_path=tmp_path / "out.epub",
+        )
+        cover_bytes = create_cover_image(
+            config, logger, title="Test\nGuide", subtitle="A Subtitle"
+        )
+        assert len(cover_bytes) > 0
+
+    def test_generated_cover_with_logo(self, tmp_path: Path, logger: logging.Logger) -> None:
+        """Should generate cover with logo when logo exists."""
+        from PIL import Image as PILImage
+
+        logo = tmp_path / "claude-howto-logo.png"
+        PILImage.new("RGBA", (100, 100), (255, 255, 255, 255)).save(logo, "PNG")
+
+        config = EPUBConfig(
+            root_path=tmp_path,
+            output_path=tmp_path / "out.epub",
+        )
+        cover_bytes = create_cover_image(config, logger)
+        assert len(cover_bytes) > 0
+
+    def test_logo_non_rgba_mode(self, tmp_path: Path, logger: logging.Logger) -> None:
+        """Should handle logo in non-RGBA mode."""
+        from PIL import Image as PILImage
+
+        logo = tmp_path / "claude-howto-logo.png"
+        # Create a P-mode (palette) image
+        PILImage.new("P", (100, 100)).save(logo, "PNG")
+
+        config = EPUBConfig(
+            root_path=tmp_path,
+            output_path=tmp_path / "out.epub",
+        )
+        cover_bytes = create_cover_image(config, logger)
+        assert len(cover_bytes) > 0
+
+
+class TestHandleSvgImage:
+    """Tests for SVG image handling."""
+
+    def test_returns_placeholder(self, logger: logging.Logger) -> None:
+        result = handle_svg_image("path/to/diagram.svg", "My Diagram", logger)
+        assert "svg-placeholder" in result
+        assert "My Diagram" in result
+        assert "path/to/diagram.svg" in result
+
+    def test_escapes_alt_text(self, logger: logging.Logger) -> None:
+        result = handle_svg_image("file.svg", "<script>alert('xss')</script>", logger)
+        assert "<script>" not in result
+        assert "&lt;script&gt;" in result
+
+
+class TestConvertInternalLinksEdgeCases:
+    """Tests for convert_internal_links edge cases."""
+
+    def test_external_links_unchanged(self, tmp_path: Path) -> None:
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        html = '<p><a href="https://example.com">External</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = convert_internal_links(soup, tmp_path / "test.md", tmp_path, state)
+        a = result.find("a")
+        assert a["href"] == "https://example.com"
+
+    def test_mailto_links_unchanged(self, tmp_path: Path) -> None:
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        html = '<p><a href="mailto:test@example.com">Email</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = convert_internal_links(soup, tmp_path / "test.md", tmp_path, state)
+        a = result.find("a")
+        assert a["href"] == "mailto:test@example.com"
+
+    def test_hash_only_unchanged(self, tmp_path: Path) -> None:
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        html = '<p><a href="#section">Anchor</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = convert_internal_links(soup, tmp_path / "test.md", tmp_path, state)
+        a = result.find("a")
+        assert a["href"] == "#section"
+
+    def test_empty_href_unchanged(self, tmp_path: Path) -> None:
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        html = '<p><a href="">Empty</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = convert_internal_links(soup, tmp_path / "test.md", tmp_path, state)
+        a = result.find("a")
+        assert a["href"] == ""
+
+    def test_link_outside_repo_skipped(self, tmp_path: Path) -> None:
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        html = '<p><a href="../../outside.md">Outside</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = convert_internal_links(soup, tmp_path / "a" / "b" / "test.md", tmp_path, state)
+        a = result.find("a")
+        assert a["href"] == "../../outside.md"
+
+    def test_directory_link_with_readme(self, tmp_path: Path) -> None:
+        from bs4 import BeautifulSoup
+
+        state = BuildState()
+        state.path_to_chapter["sub/README.md"] = "chap_01_00.xhtml"
+
+        subdir = tmp_path / "sub"
+        subdir.mkdir()
+        (subdir / "README.md").write_text("# Sub")
+
+        html = '<p><a href="sub/">Directory</a></p>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = convert_internal_links(soup, tmp_path / "test.md", tmp_path, state)
+        a = result.find("a")
+        assert a["href"] == "chap_01_00.xhtml"
+
+
+class TestProcessMermaidBlocks:
+    """Tests for process_mermaid_blocks."""
+
+    def test_no_mermaid_returns_unchanged(self, state: BuildState, logger: logging.Logger) -> None:
+        content = "# Title\n\nNo diagrams here.\n"
+        result = process_mermaid_blocks(content, epub.EpubBook(), state, logger)
+        assert result == content
+
+    def test_mermaid_replaced_when_cached(
+        self, state: BuildState, logger: logging.Logger
+    ) -> None:
+        content = "# Title\n\n```mermaid\ngraph TD\n    A --> B\n```\n"
+        state.mermaid_cache["graph TD\n    A --> B"] = (b"fake_png", "mermaid_1.png")
+
+        result = process_mermaid_blocks(content, epub.EpubBook(), state, logger)
+
+        assert "mermaid_1.png" in result
+        assert "```mermaid" not in result
+
+
+class TestCreateStylesheet:
+    """Tests for create_stylesheet."""
+
+    def test_returns_epub_item(self) -> None:
+        from build_epub import create_stylesheet
+
+        item = create_stylesheet()
+        assert item.file_name == "style/nav.css"
+        assert item.media_type == "text/css"
+        assert "font-family: Georgia" in item.content
+
+
+class TestMermaidRendererCacheHit:
+    """Tests for MermaidRenderer cache hit scenarios."""
+
+    @pytest.mark.asyncio
+    async def test_fetch_single_cache_hit(
+        self, config: EPUBConfig, state: BuildState, logger: logging.Logger
+    ) -> None:
+        """Cache hit should return cached data without network call."""
+        renderer = MermaidRenderer(config, state, logger)
+        renderer._semaphore = asyncio.Semaphore(1)
+
+        # Pre-populate cache
+        state.mermaid_cache["cached diagram"] = (b"cached_data", "mermaid_1.png")
+
+        result = await renderer._fetch_single(
+            None, "cached diagram", 1  # type: ignore[arg-type]
+        )
+
+        assert result is not None
+        assert result[0] == "cached diagram"
+        assert result[1] == (b"cached_data", "mermaid_1.png")
+
+
+class TestCreateEpubWrapper:
+    """Tests for create_epub synchronous wrapper."""
+
+    def test_module_has_create_epub(self) -> None:
+        from build_epub import create_epub
+
+        assert callable(create_epub)
+
+
+class TestBuildEpubAsyncEdgeCases:
+    """Tests for build_epub_async edge cases."""
+
+    @pytest.mark.asyncio
+    async def test_build_with_empty_chapter_list(
+        self, tmp_path: Path, logger: logging.Logger
+    ) -> None:
+        """Empty chapter order should still produce valid EPUB."""
+        from build_epub import build_epub_async
+        from PIL import Image as PILImage
+        from unittest.mock import patch
+
+        readme = tmp_path / "README.md"
+        readme.write_text("# Test\n")
+        logo = tmp_path / "claude-howto-logo.png"
+        PILImage.new("RGB", (100, 100)).save(logo, "PNG")
+
+        config = EPUBConfig(
+            root_path=tmp_path,
+            output_path=tmp_path / "test.epub",
+        )
+
+        with patch("build_epub.get_chapter_order") as mock_order:
+            mock_order.return_value = []
+
+            result = await build_epub_async(config, logger)
+            assert result.exists()
 
 
 # =============================================================================

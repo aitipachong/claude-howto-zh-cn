@@ -5,7 +5,7 @@
 
 [![Source Project](https://img.shields.io/badge/source-luongnv89%2Fclaude--howto-24292f)](https://github.com/luongnv89/claude-howto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Localization](https://img.shields.io/badge/localization-zh--CN-brightgreen)](LOCALIZATION-STYLE.md)
+[![Localization](https://img.shields.io/badge/localization-zh--CN-brightgreen)](docs/contributing/LOCALIZATION-STYLE.md)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-2.1+-purple)](https://code.claude.com)
 
 # Claude Code 中文全面上手指南
@@ -14,36 +14,11 @@
 
 这是一个基于上游项目 [`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto) 的 **非官方中文本土化 fork**。它不是生硬逐句翻译，而是面向中国小白用户重写表达方式、补齐学习路径、保留所有关键可执行标识，并加入翻译后兼容性校验。
 
-**[15 分钟快速开始](#-15-分钟快速开始)** | **[先判断你适合从哪开始](#-不知道从哪里开始)** | **[浏览功能总表](CATALOG.md)** | **[查看来源与同步说明](UPSTREAM.md)**
+**[15 分钟快速开始](#-15-分钟快速开始)** | **[先判断你适合从哪开始](#-不知道从哪里开始)** | **[浏览功能总表](CATALOG.md)** | **[查看来源与同步说明](docs/project/UPSTREAM.md)**
 
 ---
 
-## 最近同步
-
-- **最近同步日期**：2026-05-23
-- **本轮参考范围**：`7e369ee` -> `46941a3`
-- **本次同步内容**：
-  - 同步 Claude Code `v2.1.145` 相关口径：`/usage-credits`、`/model` session-only 默认行为、`claude agents --json`
-  - 补充 `/run`、`/verify`、`/run-skill-generator` 三个 bundled skills，以及 Stop / SubagentStop hook 新字段
-  - 记录 Bash 裸环境变量 allowlist 自动批准漏洞已修复，避免中文用户继续按旧权限规则配置
-  - 审阅上游多语言目录 root-level logo 路径修正；本 fork 不维护额外多语言目录树，因此不引入对应子目录改动
-
----
-
-## Table of Contents
-
-- [最近同步](#最近同步)
-- [这是什么项目](#这是什么项目)
-- [本项目做了哪些调整](#本项目做了哪些调整)
-- [哪些内容为了兼容性不会翻译](#哪些内容为了兼容性不会翻译)
-- [为什么这份指南更适合中国小白](#为什么这份指南更适合中国小白)
-- [怎么使用这份指南](#怎么使用这份指南)
-- [不知道从哪里开始](#-不知道从哪里开始)
-- [15 分钟快速开始](#-15-分钟快速开始)
-- [你能用它搭什么](#你能用它搭什么)
-- [常见问题](#常见问题)
-- [参与贡献](#contributing)
-- [许可证](#license)
+> **最近同步**：2026-05-23（`7e369ee` → `46941a3`）。完整记录见 [CHANGELOG.md](docs/project/CHANGELOG.md)。
 
 ---
 
@@ -64,100 +39,28 @@
 
 ---
 
-## 本项目做了哪些调整
+## 关于这个中文版
 
-和上游英文项目相比，这个中文版做了这些本土化处理：
+和上游英文项目相比，这个中文版做了以下本土化处理：
 
-- 把首页、学习路线、速查卡、功能目录等核心入口文档改成中文主线表达。
-- 用中国小白更容易理解的方式重写“是什么 / 什么时候用 / 怎么装 / 怎么跑 / 常见坑”。
-- 保留所有会影响运行的关键标识，避免为了翻译把示例翻坏。
-- 补充中国用户常见障碍说明，比如 GitHub Token、`npm` / `npx` / `uv` / Python 环境、网络与代理、macOS / Windows / WSL 差异。
-- 增加来源声明、同步策略和本地化风格规范，方便后续持续跟进上游版本。
-- 增加本地化校验脚本，自动检查 frontmatter、JSON/YAML、shell 脚本、关键命令名和受保护标识是否仍然可用。
+- 把学习路径、速查卡、功能目录等核心入口改成中文主线表达
+- 保留所有影响运行的关键标识（命令名、frontmatter key、JSON key、CLI flags 等），确保复制就能跑
+- 补充中国用户常见障碍说明（GitHub Token、网络代理、Windows/WSL 差异等）
+- 增加本地化校验脚本，防止翻译把示例改坏
 
-详细规则见：
-
-- [UPSTREAM.md](UPSTREAM.md)
-- [LOCALIZATION-STYLE.md](LOCALIZATION-STYLE.md)
+详细规则见 [docs/project/UPSTREAM.md](docs/project/UPSTREAM.md) 和 [docs/contributing/LOCALIZATION-STYLE.md](docs/contributing/LOCALIZATION-STYLE.md)。
 
 ---
 
-## 哪些内容为了兼容性不会翻译
+## 怎么使用
 
-为了确保示例仍然能直接复制运行，下列内容默认 **保留英文，不做中文化改名**：
-
-- 目录名、文件名
-- slash command 名称
-- skill / subagent / plugin 名称
-- YAML frontmatter key
-- JSON / YAML key
-- CLI flags、环境变量名、路径占位符、MCP server 名
-- 代码块里的可执行命令、配置片段、协议字段
-
-举例来说，`skills`、`CLI`、`hooks`、`MCP`、`subagents` 这些术语在正文里通常会保留英文，并在首次出现时补充中文解释；但不会粗暴改成一个中文词后再让读者回头猜原始命令是什么。
-
----
-
-## 为什么这份指南更适合中国小白
-
-这个中文版本不是“翻译腔”文档，而是按学习体验重新组织表达：
-
-- 先讲清楚“这是什么”和“什么时候用”，再给你命令和配置。
-- 尽量把容易混淆的概念放在一起对比，比如 slash commands、skills、memory、hooks、plugins 的职责边界。
-- 对中国开发者常见的安装、访问和权限问题，直接给出前置提醒，不让你跑到一半才踩坑。
-- 对高风险示例明确提醒哪些行不能翻、哪些字段不能改。
-
----
-
-## 怎么使用这份指南
-
-### 1. 先找自己的起点
-
-直接看 [LEARNING-ROADMAP.md](LEARNING-ROADMAP.md)，先做自测，再按 beginner / intermediate / advanced 路线学。
-
-### 2. 再按模块逐步上手
-
-仓库里的 10 个模块按推荐顺序排列：
-
-1. [Slash Commands](01-slash-commands/)
-2. [Memory](02-memory/)
-3. [Checkpoints](08-checkpoints/)
-4. [CLI Basics](10-cli/)
-5. [Skills](03-skills/)
-6. [Hooks](06-hooks/)
-7. [MCP](05-mcp/)
-8. [Subagents](04-subagents/)
-9. [Advanced Features](09-advanced-features/)
-10. [Plugins](07-plugins/)
-
-### 3. 边学边复制模板
-
-这个仓库不是纯阅读材料。很多文件都可以直接复制到你的项目里，例如：
-
-- `01-slash-commands/*.md`
-- `02-memory/project-CLAUDE.md`
-- `03-skills/*/SKILL.md`
-- `04-subagents/*.md`
-- `05-mcp/*.json`
-- `06-hooks/*.sh`
-- `07-plugins/*`
-- `local-progress/index.html`
-
-### 4. 每改一处示例都先确认兼容性
-
-如果你继续 fork 并深度本地化，建议每次改完都跑：
-
-```bash
-uv run python scripts/validate_localization.py
-```
-
-它会帮你检查：
-
-- Markdown 相对链接
-- YAML frontmatter
-- JSON / YAML 解析
-- shell 脚本语法
-- 关键可执行标识是否被误改
+1. **找起点**：看 [LEARNING-ROADMAP.md](LEARNING-ROADMAP.md) 做自测，按路线学
+2. **按模块上手**：10 个模块按推荐顺序排列——[01](01-slash-commands/) → [02](02-memory/) → [08](08-checkpoints/) → [10](10-cli/) → [03](03-skills/) → [06](06-hooks/) → [05](05-mcp/) → [04](04-subagents/) → [09](09-advanced-features/) → [07](07-plugins/)
+3. **边学边复制**：很多文件可直接复制到你的项目里（slash commands、CLAUDE.md、skills、subagents、hooks 等）
+4. **改完跑校验**：
+   ```bash
+   uv run python scripts/validate_localization.py
+   ```
 
 ---
 
@@ -231,7 +134,7 @@ cp -r 03-skills/code-review ~/.claude/skills/
 ## 常见问题
 
 **这是官方项目吗？**  
-不是。这是基于上游社区项目做的中文本土化 fork，来源与同步策略见 [UPSTREAM.md](UPSTREAM.md)。
+不是。这是基于上游社区项目做的中文本土化 fork，来源与同步策略见 [docs/project/UPSTREAM.md](docs/project/UPSTREAM.md)。
 
 **我能直接复制里面的命令和配置吗？**  
 大多数可以，但前提是你不要改坏关键标识。像 frontmatter key、JSON key、CLI flags、环境变量名这些不能为了中文化而改掉。
@@ -252,48 +155,26 @@ uv run scripts/build_epub.py
 会生成 EPUB 电子书。脚本说明见 [scripts/README.md](scripts/README.md)。
 
 **之后怎么跟上游同步？**  
-请先看 [UPSTREAM.md](UPSTREAM.md)。本仓库默认按“持续同步上游、中文侧增量跟进”的方式维护。
+请先看 [docs/project/UPSTREAM.md](docs/project/UPSTREAM.md)。本仓库默认按“持续同步上游、中文侧增量跟进”的方式维护。
 
 ---
 
-<details>
-<summary>快速导航：所有核心能力</summary>
+## 核心能力速览
 
-| 能力 | 说明 | 入口 |
-|------|------|------|
-| 功能总表 | 一眼看全所有功能、安装方式、适用场景 | [CATALOG.md](CATALOG.md) |
-| 学习路线 | 从新手到进阶的推荐学习顺序 | [LEARNING-ROADMAP.md](LEARNING-ROADMAP.md) |
-| Quick Reference | 安装命令、路径、常用场景速查 | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) |
-| Slash Commands | 用户主动触发的快捷操作 | [01-slash-commands/](01-slash-commands/) |
-| Memory | 持久上下文与规则 | [02-memory/](02-memory/) |
-| Skills | 自动触发的复用能力 | [03-skills/](03-skills/) |
-| Subagents | 分工明确的 AI 助手 | [04-subagents/](04-subagents/) |
-| MCP | 外部工具与实时数据接入 | [05-mcp/](05-mcp/) |
-| Hooks | 事件驱动自动化 | [06-hooks/](06-hooks/) |
-| Plugins | 多能力打包分发 | [07-plugins/](07-plugins/) |
-| Checkpoints | 安全试错与回退 | [08-checkpoints/](08-checkpoints/) |
-| Advanced Features | plan、auto mode、background tasks 等高级能力 | [09-advanced-features/](09-advanced-features/) |
-| CLI | `claude` / `claude -p` / session / automation 参考 | [10-cli/](10-cli/) |
+| 能力 | 触发方式 | 最适合什么 | 入口 |
+|------|----------|------------|------|
+| Slash Commands | 手动输入 `/cmd` | 高频快捷操作 | [01](01-slash-commands/) |
+| Memory | 自动加载 | 长期规则与偏好 | [02](02-memory/) |
+| Skills | 自动触发 | 可复用工作流 | [03](03-skills/) |
+| Subagents | 自动委派 | 任务拆分 | [04](04-subagents/) |
+| MCP | 自动查询 | 外部系统接入 | [05](05-mcp/) |
+| Hooks | 事件触发 | 自动检查和拦截 | [06](06-hooks/) |
+| Plugins | 一次安装 | 团队级打包方案 | [07](07-plugins/) |
+| Checkpoints | 内建 | 安全试错 | [08](08-checkpoints/) |
+| Advanced Features | 手动/自动 | 复杂实现 | [09](09-advanced-features/) |
+| CLI | 终端命令 | 自动化与 CI/CD | [10](10-cli/) |
 
-</details>
-
-<details>
-<summary>核心能力对照</summary>
-
-| 能力 | 触发方式 | 持久性 | 最适合什么 |
-|------|----------|--------|------------|
-| Slash Commands | 手动输入 `/cmd` | 当前会话 | 高频快捷操作 |
-| Memory | 自动加载 | 跨会话 | 长期规则与偏好 |
-| Skills | 自动触发 | 文件系统级 | 可复用工作流 |
-| Subagents | 自动委派或显式调用 | 独立上下文 | 任务拆分 |
-| MCP | 自动查询 | 实时 | 外部系统接入 |
-| Hooks | 事件触发 | 配置级 | 自动检查和拦截 |
-| Plugins | 一次安装 | 组合能力 | 团队级打包方案 |
-| Checkpoints | 内建 | 会话级 | 安全试错 |
-| Planning Mode | 手动或自动进入 | 计划阶段 | 复杂实现 |
-| CLI | 终端命令 | 脚本 / 会话 | 自动化与 CI/CD |
-
-</details>
+完整功能目录见 [CATALOG.md](CATALOG.md)。
 
 ---
 
@@ -301,8 +182,8 @@ uv run scripts/build_epub.py
 
 欢迎继续把这个中文 fork 做得更适合中文用户，但请遵循两个底线：
 
-- 先看 [LOCALIZATION-STYLE.md](LOCALIZATION-STYLE.md)，不要把可执行标识翻坏。
-- 先看 [UPSTREAM.md](UPSTREAM.md)，不要在没有记录映射关系的情况下随意偏离上游结构。
+- 先看 [docs/contributing/LOCALIZATION-STYLE.md](docs/contributing/LOCALIZATION-STYLE.md)，不要把可执行标识翻坏。
+- 先看 [docs/project/UPSTREAM.md](docs/project/UPSTREAM.md)，不要在没有记录映射关系的情况下随意偏离上游结构。
 
 如果你要贡献翻译或重写内容，建议至少本地跑一次：
 
@@ -316,4 +197,4 @@ uv run python scripts/validate_localization.py
 
 本仓库沿用上游项目的 [MIT License](LICENSE)。
 
-来源项目、上游 commit、同步策略和本地化边界见 [UPSTREAM.md](UPSTREAM.md)。
+来源项目、上游 commit、同步策略和本地化边界见 [docs/project/UPSTREAM.md](docs/project/UPSTREAM.md)。

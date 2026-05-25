@@ -95,7 +95,7 @@ scripts/                校验、构建、测试脚本
 2. 跑 `uv run python scripts/validate_localization.py`
 3. 跑 `uv run pytest scripts/tests/ -q`
 4. 如果改了 EPUB 构建，再跑 `uv run scripts/build_epub.py`
-5. 在 `README.md`、`UPSTREAM.md`、`CHANGELOG.md` 里记录最近同步内容
+5. 在 `README.md`、`docs/project/UPSTREAM.md`、`docs/project/CHANGELOG.md` 里记录最近同步内容
 
 ## 提交信息风格
 

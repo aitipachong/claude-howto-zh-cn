@@ -306,5 +306,5 @@ chmod +x ~/.claude/hooks/pre-commit.sh
 
 - 想直接开始复制配置：看 [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
 - 想整体浏览能力地图：看 [CATALOG.md](CATALOG.md)
-- 想理解本中文 fork 的边界和同步方式：看 [UPSTREAM.md](UPSTREAM.md)
-- 想继续做中文化贡献：看 [LOCALIZATION-STYLE.md](LOCALIZATION-STYLE.md)
+- 想理解本中文 fork 的边界和同步方式：看 [UPSTREAM.md](docs/project/UPSTREAM.md)
+- 想继续做中文化贡献：看 [LOCALIZATION-STYLE.md](docs/contributing/LOCALIZATION-STYLE.md)

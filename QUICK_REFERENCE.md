@@ -156,8 +156,8 @@ claude agents --json   # 机器可读的 Agent View 列表
 
 想继续中文化仓库时，先看：
 
-- [LOCALIZATION-STYLE.md](LOCALIZATION-STYLE.md)
-- [UPSTREAM.md](UPSTREAM.md)
+- [LOCALIZATION-STYLE.md](docs/contributing/LOCALIZATION-STYLE.md)
+- [UPSTREAM.md](docs/project/UPSTREAM.md)
 
 ---
 

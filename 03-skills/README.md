@@ -286,4 +286,4 @@ skill 里支持 ``!`command` `` 这种写法：Claude 在真正读取 skill 前�
 
 - 想让任务分工更专业：看 [04-subagents](../04-subagents/)
 - 想在工具调用前后做自动动作：看 [06-hooks](../06-hooks/)
-- 想继续用中文规范扩写：看 [LOCALIZATION-STYLE.md](../LOCALIZATION-STYLE.md)
+- 想继续用中文规范扩写：看 [LOCALIZATION-STYLE.md](../docs/contributing/LOCALIZATION-STYLE.md)

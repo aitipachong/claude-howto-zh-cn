@@ -26,9 +26,9 @@
 - `LEARNING-ROADMAP.md`
 - `QUICK_REFERENCE.md`
 - `CATALOG.md`
-- `CHANGELOG.md`
-- `UPSTREAM.md`
-- `LOCALIZATION-STYLE.md`
+- `docs/project/CHANGELOG.md`
+- `docs/project/UPSTREAM.md`
+- `docs/contributing/LOCALIZATION-STYLE.md`
 
 ## 资源与脚本
 

@@ -28,6 +28,7 @@ MARKDOWN_IGNORE_PARTS = {
     "zh",
     "vi",
     "uk",
+    "ONBOARDING.md",
 }
 
 ALLOWED_ENGLISH_HEADING_RE = [
@@ -70,12 +71,12 @@ FORBIDDEN_UNTRANSLATED_SNIPPETS = [
 ]
 LINK_VALIDATION_PATHS = [
     Path("README.md"),
-    Path("UPSTREAM.md"),
-    Path("LOCALIZATION-STYLE.md"),
+    Path("docs/project/UPSTREAM.md"),
+    Path("docs/contributing/LOCALIZATION-STYLE.md"),
     Path("LEARNING-ROADMAP.md"),
     Path("QUICK_REFERENCE.md"),
     Path("CATALOG.md"),
-    Path("CHANGELOG.md"),
+    Path("docs/project/CHANGELOG.md"),
     Path("02-memory/README.md"),
     Path("03-skills/README.md"),
     Path("05-mcp/README.md"),
@@ -92,7 +93,6 @@ LINK_VALIDATION_PATHS = [
 
 PROTECTED_SNIPPETS = {
     Path("README.md"): [
-        "## Table of Contents",
         "## Contributing",
         "## License",
         "UPSTREAM.md",

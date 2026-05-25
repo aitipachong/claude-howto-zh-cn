@@ -229,7 +229,7 @@
 
 ### 中文 fork 处理
 
-- 新增根目录 [CLAUDE.md](CLAUDE.md)，写明本仓库的协作与校验约定
+- 新增根目录 [CLAUDE.md](../../CLAUDE.md)，写明本仓库的协作与校验约定
 - 新增 `04-subagents/performance-optimizer.md`
 - 新增 `06-hooks/pre-tool-check.sh` 与 `06-hooks/dependency-check.sh`
 - 将 `format-code.sh`、`log-bash.sh`、`security-scan.sh`、`validate-prompt.sh` 同步到新版协议写法
