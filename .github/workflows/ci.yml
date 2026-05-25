@@ -43,16 +43,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Install validation dependencies
-        run: pip install pyyaml
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Run localization validation
-        run: python3 scripts/validate_localization.py
+        run: uv run --with pyyaml python3 scripts/validate_localization.py
 
   security:
     name: Security Scan

@@ -80,17 +80,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Install PyYAML
-        run: pip install pyyaml
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Validate YAML Frontmatter
         run: |
-          python3 << 'EOF'
+          uv run --with pyyaml python3 << 'EOF'
           import os
           import yaml
           import re
@@ -137,16 +135,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Install PyYAML
-        run: pip install pyyaml
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Run localization validation
-        run: python3 scripts/validate_localization.py
+        run: uv run --with pyyaml python3 scripts/validate_localization.py
 
   structure:
     name: Documentation Structure
@@ -155,14 +151,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Validate Documentation Structure
         run: |
-          python3 << 'EOF'
+          uv run python3 << 'EOF'
           import os
           from pathlib import Path
           import re
@@ -288,14 +285,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Check Content Consistency
         run: |
-          python3 << 'EOF'
+          uv run python3 << 'EOF'
           import re
           from pathlib import Path
 

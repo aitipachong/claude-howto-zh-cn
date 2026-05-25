@@ -28,7 +28,7 @@ repos:
     hooks:
       - id: bandit
         name: bandit-security
-        args: [-c, pyproject.toml]
+        args: [-c, scripts/pyproject.toml]
         additional_dependencies: ["bandit[toml]"]
         types: [python]
         files: ^scripts/
@@ -53,8 +53,25 @@ repos:
       - id: check-merge-conflict
         name: check-merge-conflict
 
+  # Local project-specific hooks
   - repo: local
     hooks:
+      - id: localization-validation
+        name: localization-validation
+        language: system
+        entry: python scripts/validate_localization.py
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit, pre-push]
+
+      - id: check-cross-references
+        name: check-cross-references
+        language: system
+        entry: python scripts/check_cross_references.py
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
       - id: markdown-rendering
         name: markdown-rendering
         language: system
