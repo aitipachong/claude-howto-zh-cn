@@ -200,6 +200,20 @@ claude --plugin-url https://example.com/releases/my-plugin-0.3.0.zip
 
 ---
 
+## 查看已安装 plugin：`/plugin list`
+
+从 `v2.1.163+` 起，可以按状态查看当前 session 里的 installed plugins：
+
+```text
+/plugin list
+/plugin list --enabled
+/plugin list --disabled
+```
+
+这对团队排查很有用：先确认“插件到底有没有安装、有没有启用”，再去看具体 command、skill 或 hook 为什么没生效。
+
+---
+
 ## 依赖清理：`plugin prune`
 
 新版 CLI 补了两个对 plugin 维护很有用的命令：

@@ -84,6 +84,7 @@ cat error.log | claude -p "explain this error"
 | `--effort` | 指定思考强度；Opus 4.8 默认 `high`，也支持 `xhigh` / `max` |
 | `--permission-mode` | 指定权限模式 |
 | `--bare` | 以最小模式启动 |
+| `--safe-mode` | 禁用 CLAUDE.md、plugins、skills、hooks、MCP servers，用于隔离配置问题 |
 | `--add-dir` | 加额外目录到工作上下文 |
 | `--tmux` | 给 worktree / 多任务场景创建 tmux 会话 |
 | `--exclude-dynamic-system-prompt-sections` | 排除系统提示中的动态段落，帮助 prompt cache 更稳定命中 |
@@ -154,6 +155,10 @@ claude --append-system-prompt "Always explain tradeoffs" "review this plan"
 - 新增 `claude plugin init <name>`，可在 `.claude/skills` 中脚手架本地 plugin
 - Bedrock / Vertex / Foundry 上的 Auto Mode 需要显式设置 `CLAUDE_CODE_ENABLE_AUTO_MODE=1`
 - `EnterWorktree` 可以在同一 session 中切换 Claude 管理的 worktree
+- `/cd <path>` 可以在保留 prompt cache 的情况下切换当前 session 工作目录
+- `--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1` 适合排查 CLAUDE.md、plugins、skills、hooks、MCP 带来的配置问题
+- `fallbackModel` 最多可以配置三个 fallback models；`--fallback-model` 从 `v2.1.166+` 起也适用于交互式 session
+- `claude-fable-5` 出现在上游模型表里，作为模型 ID 时不要翻译
 - Windows 侧正在逐步拿到更专门的 PowerShell tool
 - 主题里新增了更贴近终端外观的 Auto 模式
 - 只读型 Bash / Glob 调用的权限提示比以前更安静
@@ -380,6 +385,8 @@ claude ultrareview 1234 --json > review.json
 | `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` | 为 Homebrew / WinGet 安装启用后台升级 |
 | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | 在设置了 `ANTHROPIC_BASE_URL` 时，显式开启 `/v1/models` 网关发现 |
 | `CLAUDE_CODE_ENABLE_AUTO_MODE` | 设为 `1` 后，在 Bedrock / Vertex / Foundry 上对 Opus 4.7 / 4.8 显式启用 Auto Mode |
+| `CLAUDE_CODE_SAFE_MODE` | 设为 `1` 后以 safe mode 启动，禁用 CLAUDE.md、plugins、skills、hooks、MCP servers |
+| `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` | 设为 `1` 后隐藏内置 skills、workflows 和 commands |
 | `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` | `v2.1.160` 起已经是 no-op；如果仍想让 Opus 4.6 走 fast mode，先 `/model claude-opus-4-6[1m]`，再 `/fast on` |
 | `CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN` | 设为 `1` 后，停留在普通终端滚动历史里，而不是 fullscreen alternate-screen 渲染 |
 | `CLAUDE_CODE_SESSION_ID` | 每个 Bash tool 子进程都会带上这个 session UUID，可用来和 hooks / telemetry 对日志 |

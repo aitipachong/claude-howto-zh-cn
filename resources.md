@@ -25,6 +25,13 @@
 | `/simplify` | 清理型审查命令，关注复用、简化、效率和抽象层级 | [Skills Guide](03-skills/) |
 | `/reload-skills` | 重新扫描 skill 目录，不需要重启当前 session | [Skills Guide](03-skills/) |
 | `/workflows` | 查看 dynamic workflows 的运行记录 | [Advanced Features](09-advanced-features/) |
+| `/cd <path>` | 切换当前 session 工作目录，并尽量保留 prompt cache | [Slash Commands](01-slash-commands/) |
+| `--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1` | 禁用 CLAUDE.md、plugins、skills、hooks、MCP servers，用于排查配置问题 | [Advanced Features](09-advanced-features/) |
+| `fallbackModel` | 配置最多三个 fallback models；`--fallback-model` 也适用于交互式 session | [CLI Guide](10-cli/) |
+| `disableBundledSkills` | 隐藏内置 skills、workflows 和 commands | [Skills Guide](03-skills/) |
+| `/plugin list --enabled` | 按启用状态查看 installed plugins | [Plugins Guide](07-plugins/) |
+| `hookSpecificOutput.additionalContext` | Stop / SubagentStop hook 给 Claude 追加上下文并继续当前 turn | [Hooks Guide](06-hooks/) |
+| `CLAUDE_CODE_SESSION_ID` | 串联 MCP server、hooks 和 Bash 日志的 session 标识 | [MCP Guide](05-mcp/) |
 | `claude plugin init <name>` | 在 `.claude/skills` 中脚手架本地 plugin；该目录下的 plugin 会自动加载 | [Plugins Guide](07-plugins/) |
 | `CLAUDE_CODE_ENABLE_AUTO_MODE=1` | 在 Bedrock / Vertex / Foundry 上对 Opus 4.7 / 4.8 显式启用 Auto Mode | [CLI Guide](10-cli/) |
 | `EnterWorktree` | 在同一 session 中切换 Claude 管理的 worktree | [Advanced Features](09-advanced-features/) |

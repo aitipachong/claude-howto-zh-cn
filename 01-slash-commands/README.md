@@ -45,6 +45,7 @@ Claude Code 里的 slash commands 大致分四类：
 | `/mcp` | 管理 MCP |
 | `/plugin` | 管理 plugins |
 | `/plan` | 进入 planning mode |
+| `/cd <path>` | 切换当前 session 的工作目录，并尽量保留 prompt cache |
 | `/focus` | 切换 focus view，减少长任务时的视觉干扰 |
 | `/goal <目标>` | 给当前 session 注册一个持续追踪的完成目标 |
 | `/less-permission-prompts` | 分析常见 Bash / MCP 调用，帮你生成更合理的 allowlist |
@@ -67,6 +68,8 @@ Claude Code 里的 slash commands 大致分四类：
 | `/usage-credits` | 配置额外用量额度；`/extra-usage` 仍可作为 alias（别名）使用 |
 
 这些命令不用安装，开箱即用。
+
+`/cd <path>` 是 `v2.1.169+` 新增的实用入口。以前中途换目录往往会让 prompt cache 变冷，下一轮更慢也更贵；现在需要在同一个 session 里从前端目录切到后端目录时，优先用 `/cd`，不要为了换目录手动重开一轮。
 
 > 截至 2026 年 5 月，上游内建命令已经到了 **60+**，并且部分命令会继续改名或调整默认行为。这里保留的是中国小白最该先掌握的一批。
 

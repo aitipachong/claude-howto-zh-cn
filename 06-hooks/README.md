@@ -353,6 +353,19 @@ hooks 通常通过 `stdin` 接收 JSON 输入。
 
 还有一个安全修复值得单独记住：`v2.1.145` 关闭了 Bash 裸环境变量 allowlist 的自动批准漏洞。以前如果只允许了 `FOO=bar`，某些 `FOO=bar somecommand` 形式的命令可能被误认为已允许；现在这类命令会重新触发权限提示。需要自动批准时，请写覆盖完整命令的 `Bash(...)` 规则，而不是只允许环境变量赋值本身。
 
+从 `v2.1.163+` 起，`Stop` / `SubagentStop` hook 还可以返回 `hookSpecificOutput.additionalContext`，把上下文补给 Claude 并继续当前 turn，而不是用 `"decision": "block"` 这种容易显示成错误标签的方式“硬拦住”。
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "Stop",
+    "additionalContext": "请先运行测试，再说明任务完成。"
+  }
+}
+```
+
+这里的 `hookSpecificOutput`、`hookEventName`、`additionalContext`、`Stop` 都是协议字段，不要翻译。
+
 ---
 
 ## 本目录示例脚本怎么用

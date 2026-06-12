@@ -510,6 +510,17 @@ claude -p "Run tests and summarize failures"
 cat error.log | claude -p "Explain this error"
 ```
 
+### Safe Mode：先隔离自定义配置
+
+如果 Claude Code 行为突然很怪，先别急着怀疑项目代码。`v2.1.169+` 提供了 `--safe-mode`：
+
+```bash
+claude --safe-mode
+CLAUDE_CODE_SAFE_MODE=1 claude
+```
+
+它会禁用 CLAUDE.md、plugins、skills、hooks 和 MCP servers，用来判断问题到底来自你的自定义配置，还是 Claude Code 本身。它是排障工具，不是日常默认启动方式。
+
 ### Session Recap（会话回顾）
 
 上游从 v2.1.108 起补充了 session recap 的说明。简单说：
@@ -740,6 +751,18 @@ sandboxing 的核心不是“更麻烦”，而是“更安全地控制 Claude �
 如果你在 SDK / 企业策略场景里工作，这轮还有个更偏管理员的设置值得知道：
 
 - `parentSettingsBehavior`：控制 SDK 的 `managedSettings` 和父进程 settings 发生冲突时，是保持旧的 `"first-wins"`，还是改为深度 `"merge"`
+
+### `fallbackModel`：最多三个 fallback models
+
+如果主模型过载或临时不可用，可以配置最多三个 fallback models，Claude Code 会按顺序尝试：
+
+```json
+{
+  "fallbackModel": ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5"]
+}
+```
+
+从 `v2.1.166+` 起，`--fallback-model` 也适用于交互式 session，不再只限 print mode。需要注意：认证失败、限流、请求过大和传输错误不会走 fallback；这类问题要先修凭证、额度、输入大小或网络。
 
 ---
 

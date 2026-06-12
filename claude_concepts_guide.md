@@ -14,7 +14,7 @@
 
 可复用、可自动触发的能力，适合沉淀稳定工作流。
 
-`v2.1.160` 这轮同步后，特别值得关注这些 bundled skills 和 plugin 变化：
+`v2.1.170` 这轮同步后，特别值得关注这些 bundled skills、plugin 和排障入口：
 
 - `/run`：启动当前项目，确认改动能真实运行
 - `/verify`：构建、运行并观察应用，确认修复不是只停留在测试通过
@@ -22,7 +22,9 @@
 - `/code-review [effort]`：审查当前 diff 的正确性缺陷
 - `/simplify`：清理型审查，关注复用、简化、效率和抽象层级，并应用修复
 - `/reload-skills`：重新扫描 skill 目录，不需要重启当前 session
+- `disableBundledSkills` / `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1`：隐藏内置 skills、workflows 和 commands
 - `claude plugin init <name>`：在 `.claude/skills` 中脚手架本地 plugin，放在该目录的 plugin 会自动加载
+- `/plugin list --enabled` / `--disabled`：按启用状态查看 installed plugins
 
 ## 4. Subagents（子代理）
 
@@ -61,3 +63,5 @@ Claude Code 的核心使用入口，也是自动化、脚本化和 CI/CD 的关�
 `v2.1.160` 起，dynamic workflows 的触发关键词是 `ultracode`；裸词 `workflow` 不再触发运行。
 
 `/model` 的默认行为也要注意：`v2.1.153+` 起选择模型会保存为后续 session 默认值；如果只想作用于当前 session，选中后按 `s`。
+
+`--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1` 适合排查自定义配置问题；`fallbackModel` 适合给主模型不可用时准备有序 fallback。

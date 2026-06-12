@@ -5,7 +5,7 @@
 - 上游仓库：[`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto)
 - 上游分支：`main`
 - 本地化基线 commit：`0ca8c37c81918458e063739425c4740ca92c2db2`
-- 最近检查到的上游 commit：`fcdc0887f127a0da6fd9e6a9d4c55a1dac6d8c17`
+- 最近检查到的上游 commit：`733c0882c3a83db86ce279759659c9c76fafe172`
 - 上游许可证：[MIT License](LICENSE)
 
 ## 本仓库性质
@@ -61,6 +61,26 @@ uv run python scripts/validate_localization.py
    - 哪些内容暂时未同步
 
 ## 最近一次同步记录
+
+### 上游同步 — 2026-06-12
+
+- Reviewed upstream range: `fcdc088` → `733c088`
+- 重点上游变化：
+  - Claude Code 教程覆盖更新到 `v2.1.170`
+  - `/cd <path>` 可在保留 prompt cache 的情况下切换 session 工作目录
+  - `--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1` 可禁用 CLAUDE.md、plugins、skills、hooks、MCP 等自定义项，用于隔离配置问题
+  - `fallbackModel` 可配置最多三个 fallback models；`--fallback-model` 从 `v2.1.166` 起也适用于交互式 session
+  - `disableBundledSkills` / `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1` 可隐藏内置 skills、workflows 和 commands
+  - `/plugin list --enabled` / `--disabled` 支持按启用状态查看 installed plugins
+  - Stop / SubagentStop hook 可返回 `hookSpecificOutput.additionalContext` 给 Claude 追加上下文并继续当前 turn
+  - stdio MCP servers 会收到 `CLAUDE_CODE_SESSION_ID`，包括 `--resume` 恢复的 session
+  - CLI 模型表新增 `claude-fable-5`
+- Chinese fork actions:
+  - 将影响真实使用的 slash command、CLI flag、settings、environment variable、hook output、MCP session 和模型标识同步进中文主线文档
+  - 保留 `/cd`、`--safe-mode`、`CLAUDE_CODE_SAFE_MODE`、`fallbackModel`、`disableBundledSkills`、`CLAUDE_CODE_DISABLE_BUNDLED_SKILLS`、`hookSpecificOutput.additionalContext`、`CLAUDE_CODE_SESSION_ID`、`claude-fable-5` 等可执行标识原文
+  - 上游 `02-memory/README.md` 仅刷新页脚和来源链接，本中文 fork 不为此改写记忆正文
+  - 不引入上游英文根 README，继续维护 `lhfer/claude-howto-zh-cn` 的中文默认入口
+  - 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
 
 ### 上游同步 — 2026-06-03
 

@@ -2,6 +2,30 @@
 
 > 本文件保留上游版本信息的时间顺序，但用中文补充阅读说明，方便中文用户快速判断“这个仓库最近同步了什么”。
 
+## 中文版同步 — 2026-06-12
+
+### 上游审阅
+
+- 核对上游范围：`fcdc088` → `733c088`
+- 上游这轮重点：
+  - 同步 Claude Code `v2.1.170`，覆盖 `v2.1.161` 到 `v2.1.170` 的新增文档
+  - `/cd <path>` 可以在不打断 prompt cache 的情况下切换工作目录
+  - `--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1` 用于禁用 CLAUDE.md、plugins、skills、hooks、MCP 等自定义项，便于排查配置问题
+  - `fallbackModel` 可配置最多三个 fallback models；`--fallback-model` 从 `v2.1.166` 起也适用于交互式 session
+  - `disableBundledSkills` / `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1` 可隐藏内置 skills、workflows 和 commands
+  - `/plugin list --enabled` / `--disabled` 可按状态查看 installed plugins
+  - Stop / SubagentStop hook 可返回 `hookSpecificOutput.additionalContext` 给 Claude 追加上下文并继续当前 turn
+  - stdio MCP servers 会收到 `CLAUDE_CODE_SESSION_ID`，包括 `--resume` 恢复的 session
+  - CLI 模型表新增 `claude-fable-5`
+
+### 中文 fork 处理
+
+- 将命令、配置、环境变量、hook 返回字段、MCP session 标识和模型标识改写进中文主线说明
+- 保留 `/cd`、`--safe-mode`、`CLAUDE_CODE_SAFE_MODE`、`fallbackModel`、`disableBundledSkills`、`CLAUDE_CODE_DISABLE_BUNDLED_SKILLS`、`hookSpecificOutput.additionalContext`、`CLAUDE_CODE_SESSION_ID`、`claude-fable-5` 等可执行标识原文
+- 上游 `02-memory/README.md` 仅刷新页脚和来源链接，本中文 fork 无需为此改写记忆正文
+- 不引入上游英文根 README，不改变中文首页结构
+- 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
+
 ## 中文版同步 — 2026-06-03
 
 ### 上游审阅

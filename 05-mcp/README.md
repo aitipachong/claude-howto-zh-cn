@@ -124,6 +124,8 @@ cp 05-mcp/multi-mcp.json .mcp.json
 这适合非常高频、几乎每次都会用到的工具。
 但不要滥用，因为常驻工具会占上下文预算，装多了反而会挤掉更相关的动态工具。
 
+从 `v2.1.163+` 起，stdio MCP servers 也会收到 `CLAUDE_CODE_SESSION_ID`，这个值和 hooks、Bash 子进程里的 session id 一致；用 `--resume` 恢复 session 时也会带上。你可以用它把 MCP server 日志、hook telemetry 和 Bash 命令日志串到同一个 session 上。
+
 ---
 
 ## `allowAllClaudeAiMcps`：组织级允许 claude.ai 云端 MCP connectors

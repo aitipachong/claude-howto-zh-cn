@@ -267,6 +267,24 @@ skill 里支持 ``!`command` `` 这种写法：Claude 在真正读取 skill 前�
 
 如果你是在团队、CI 或更受控的环境里推广 skills，这个设置很值得知道。
 
+### 隐藏内置 skills：`disableBundledSkills`
+
+从 `v2.1.169+` 开始，可以用 `disableBundledSkills` 隐藏 Claude Code 自带的 bundled skills、workflows 和 commands：
+
+```json
+{
+  "disableBundledSkills": true
+}
+```
+
+等价的环境变量写法是：
+
+```bash
+export CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1
+```
+
+它适合两类场景：一是团队想让模型只看项目自己沉淀的 skills；二是你在排查“为什么 Claude 总想调用某个内置能力”。这个 key 和环境变量都不要翻译。
+
 ---
 
 ## `skillOverrides`：控制项目 skill 和个人 skill 谁优先

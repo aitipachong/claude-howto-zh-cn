@@ -81,6 +81,8 @@ chmod +x ~/.claude/hooks/*.sh
 /plugin install pr-review
 /plugin install devops-automation
 /plugin install documentation
+/plugin list --enabled
+/plugin list --disabled
 claude plugin init my-plugin
 ```
 
@@ -110,8 +112,10 @@ claude plugin init my-plugin
 /simplify            # 清理型审查并应用修复，不负责找 bug
 /reload-skills       # 重新扫描 skill 目录
 /workflows           # 查看 dynamic workflows
+/cd ../backend       # 切换工作目录并尽量保留 prompt cache
 ultracode            # 触发 dynamic workflows 的关键词，裸词 workflow 不再触发
 export CLAUDE_CODE_ENABLE_AUTO_MODE=1  # Bedrock / Vertex / Foundry 上显式启用 Auto Mode
+CLAUDE_CODE_SAFE_MODE=1 claude          # 禁用自定义项后排查配置问题
 
 # 常见 permission mode
 claude --permission-mode default
@@ -119,6 +123,8 @@ claude --permission-mode acceptEdits
 claude --permission-mode plan
 claude --permission-mode dontAsk
 claude --permission-mode bypassPermissions
+claude --safe-mode
+claude --fallback-model sonnet
 
 # session 常用命令
 /resume

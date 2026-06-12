@@ -20,14 +20,14 @@
 
 ## 最近同步
 
-- **最近同步日期**：2026-06-03
-- **本轮参考范围**：`e30220c` -> `fcdc088`
+- **最近同步日期**：2026-06-12
+- **本轮参考范围**：`fcdc088` -> `733c088`
 - **本次同步内容**：
-  - 同步 Claude Code `v2.1.160` 口径，补充 `claude plugin init <name>`、`CLAUDE_CODE_ENABLE_AUTO_MODE=1`、`EnterWorktree` 等新增使用面
-  - 说明 Auto Mode 在 Bedrock / Vertex / Foundry 上对 Opus 4.7 / 4.8 的 opt-in 方式
-  - 更新 dynamic workflows 触发口径：触发关键词是 `ultracode`，裸词 `workflow` 不再触发运行
-  - 补充 `acceptEdits` 对 shell 启动文件和可执行构建配置写入仍会提示确认的安全边界
-  - 核对上游 `ja` / `uk` / `vi` 的 settings 优先级修正；本中文根目录文档已是正确顺序，因此不新增其他语言目录
+  - 同步 Claude Code `v2.1.170` 口径，覆盖 `v2.1.161` 到 `v2.1.170` 的增量文档
+  - 补充 `/cd <path>`、`--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1`、`fallbackModel`、`disableBundledSkills` 等新增配置和排查入口
+  - 说明 `/plugin list --enabled` / `--disabled`、Stop / SubagentStop hook 的 `hookSpecificOutput.additionalContext`、MCP stdio 的 `CLAUDE_CODE_SESSION_ID`
+  - 记录 `--fallback-model` 已适用于交互式 session，并补充 `claude-fable-5` 模型标识
+  - 继续保持根目录中文主线，不把上游英文 README 覆盖到中文首页
 
 ---
 

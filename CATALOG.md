@@ -318,6 +318,17 @@ memory 是 Claude Code 用来长期加载规则和上下文的机制。
 - `/run-skill-generator`
 - `/reload-skills`
 - `/workflows`
+- `/cd <path>`
+- `/plugin list --enabled`
+- `/plugin list --disabled`
+- `--safe-mode`
+- `CLAUDE_CODE_SAFE_MODE=1`
+- `fallbackModel`
+- `disableBundledSkills`
+- `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1`
+- `hookSpecificOutput.additionalContext`
+- `CLAUDE_CODE_SESSION_ID`
+- `claude-fable-5`
 - `claude plugin init <name>`
 - `CLAUDE_CODE_ENABLE_AUTO_MODE=1`
 - `EnterWorktree`
