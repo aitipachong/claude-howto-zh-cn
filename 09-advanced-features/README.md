@@ -751,6 +751,7 @@ sandboxing 的核心不是“更麻烦”，而是“更安全地控制 Claude �
 如果你在 SDK / 企业策略场景里工作，这轮还有个更偏管理员的设置值得知道：
 
 - `parentSettingsBehavior`：控制 SDK 的 `managedSettings` 和父进程 settings 发生冲突时，是保持旧的 `"first-wins"`，还是改为深度 `"merge"`
+- `enforceAvailableModels`：从 `v2.1.175+` 起，托管策略可以强制 `availableModels` 也约束 Default model。若用户当前默认模型不在 allowlist 里，Claude Code 会回退到允许列表里的第一个模型；用户级或项目级 settings 不能把托管策略的模型范围放宽。
 
 ### `fallbackModel`：最多三个 fallback models
 

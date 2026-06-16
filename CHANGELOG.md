@@ -2,6 +2,28 @@
 
 > 本文件保留上游版本信息的时间顺序，但用中文补充阅读说明，方便中文用户快速判断“这个仓库最近同步了什么”。
 
+## 中文版同步 — 2026-06-16
+
+### 上游审阅
+
+- 核对上游范围：`733c088` → `ae656f6`
+- 上游这轮重点：
+  - 同步 Claude Code `v2.1.176`，覆盖 `v2.1.172` 到 `v2.1.176` 的新增文档
+  - subagent 可继续 spawn 子 subagent，最多嵌套 5 层，并可通过 `Agent(agent_type)` 限制可 spawn 类型
+  - hooks 新增 handler 级 `if` 条件，可用 permission-rule 语法按工具参数继续收窄匹配
+  - `/plugin` marketplace 浏览界面新增搜索栏
+  - 新增或更新 `enforceAvailableModels`、`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language`
+  - VSCode Account & usage 视图新增 cache miss、long-context cost、subagents 以及 per-skill / per-agent / per-plugin / per-MCP 归因
+  - 上游新增 `.gitissue.yml`，并修正 `scripts/check_links.py` 对正则示例链接的误报
+
+### 中文 fork 处理
+
+- 将 subagent 嵌套、hook `if`、plugin 搜索、settings key 和 usage 归因拆分写入中文主线说明
+- 保留 `Agent(agent_type)`、`if`、`matcher`、`enforceAvailableModels`、`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language` 等可执行标识原文
+- 本仓库不采用上游 `.gitissue.yml` traceability 流程，且当前没有 `scripts/check_links.py`；这两处上游配置已审阅但不引入
+- 不引入上游英文根 README，不改变中文首页结构
+- 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
+
 ## 中文版同步 — 2026-06-12
 
 ### 上游审阅

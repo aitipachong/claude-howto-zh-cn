@@ -59,7 +59,7 @@ slash commands 是用户在 Claude Code 里主动输入的快捷操作，例如 
 | `/less-permission-prompts` | 分析调用记录并建议 allowlist |
 | `/reload-skills` | 重新扫描 skill 目录，不需要重启 session |
 | `/workflows` | 查看正在运行和已完成的 dynamic workflows |
-| `/usage` | 查看 plan 用量、限流状态和成本；`v2.1.149+` 起成本视图会按 skills、subagents、plugins、MCP server 等类别拆分 |
+| `/usage` | 查看 plan 用量、限流状态和成本；`v2.1.149+` 起成本视图会按 skills、subagents、plugins、MCP server 等类别拆分，`v2.1.174+` 的 VSCode Account & usage 视图还会显示 cache miss、long-context cost、subagents 以及 per-skill / per-agent / per-plugin / per-MCP 归因 |
 | `/usage-credits` | 配置额外用量额度；`/extra-usage` 仍可作为 alias（别名）使用 |
 | `/branch` | 从当前对话分叉（某些版本中 `/fork` 仍可能可用） |
 
@@ -100,6 +100,8 @@ permission modes 决定 Claude Code 在使用工具时需要多大授权。
 ## Subagents（子代理）
 
 subagents 是专门负责某类任务的子代理。它们适合复杂任务拆分，比如“一个做代码审查，一个做测试，一个做文档”。
+
+从 `v2.1.172+` 起，subagent 可以再 spawn 子 subagent，最多嵌套 5 层。需要限制可 spawn 对象时，保留 `Agent(agent_type)` 语法，不要翻译或改名。
 
 ### 常见内建 subagents
 
@@ -208,6 +210,8 @@ plugin-name/
 `.claude-plugin/plugin.json` 是 manifest，`name`、`version`、`description`、`license` 这些 key 不要翻。
 
 从 `v2.1.157` 起，可以用 `claude plugin init <name>` 在 `.claude/skills` 中创建本地 plugin；该目录下的 plugin 会自动加载，不需要 marketplace。
+
+从 `v2.1.172+` 起，`/plugin` marketplace 浏览界面支持搜索栏，适合团队 marketplace 规模变大后快速过滤 plugin。
 
 ---
 
@@ -329,6 +333,13 @@ memory 是 Claude Code 用来长期加载规则和上下文的机制。
 - `hookSpecificOutput.additionalContext`
 - `CLAUDE_CODE_SESSION_ID`
 - `claude-fable-5`
+- `Agent(agent_type)` 限制 subagent 可 spawn 类型，subagent 最多 5 层嵌套
+- hook handler 级 `if` 条件
+- `/plugin` marketplace 搜索栏
+- `enforceAvailableModels`
+- `wheelScrollAccelerationEnabled`
+- `footerLinksRegexes`
+- `language`
 - `claude plugin init <name>`
 - `CLAUDE_CODE_ENABLE_AUTO_MODE=1`
 - `EnterWorktree`
@@ -338,6 +349,7 @@ memory 是 Claude Code 用来长期加载规则和上下文的机制。
 - Opus 4.8 默认 effort 是 `high`
 - `claude agents` 里用 `Ctrl+T` 固定后台 session
 - `/usage` 按 skills、subagents、plugins、MCP server 等类别拆分成本
+- VSCode Account & usage 视图显示 cache miss、long-context cost、subagents 以及 per-skill / per-agent / per-plugin / per-MCP 归因
 - GFM 任务清单复选框（`- [ ]` / `- [x]`）渲染
 - `allowAllClaudeAiMcps`
 - Voice Dictation

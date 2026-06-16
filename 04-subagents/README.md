@@ -192,6 +192,15 @@ cp 04-subagents/code-reviewer.md .claude/agents/
 这对“skill + subagent” 组合工作流很重要。
 如果你以前感觉主 Claude 会用某个 skill，但一委派给 subagent 就像“忘了这项能力”，新版应该按统一目录发现逻辑来理解。
 
+### 这轮上游要补的第二点：subagent 可以再 spawn 子 subagent
+
+从 `v2.1.172+` 起，subagent 不再只能停留在“主 session -> subagent”这一层。
+它可以继续 spawn 自己的子 subagent，最多嵌套 5 层。
+
+这对复杂任务有用，比如一个 `implementation-agent` 再把安全检查交给 `secure-reviewer`，把测试补齐交给 `test-engineer`。但也要控制边界，否则多层委派很容易让成本和上下文流向变得难追。
+
+如果你要限制某个 subagent 能 spawn 哪些子 agent，使用 `Agent(agent_type)` 这种权限限制语法。这里的 `Agent(agent_type)` 是可执行标识，不要翻译成中文字段。
+
 ### 推荐拆
 
 - 任务本身可以天然分工

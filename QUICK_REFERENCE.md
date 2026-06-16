@@ -113,6 +113,7 @@ claude plugin init my-plugin
 /reload-skills       # 重新扫描 skill 目录
 /workflows           # 查看 dynamic workflows
 /cd ../backend       # 切换工作目录并尽量保留 prompt cache
+/plugin              # marketplace 浏览界面可用搜索栏过滤 plugin
 ultracode            # 触发 dynamic workflows 的关键词，裸词 workflow 不再触发
 export CLAUDE_CODE_ENABLE_AUTO_MODE=1  # Bedrock / Vertex / Foundry 上显式启用 Auto Mode
 CLAUDE_CODE_SAFE_MODE=1 claude          # 禁用自定义项后排查配置问题
@@ -134,6 +135,12 @@ claude -c
 claude -r "session-name"
 claude agents --json   # 机器可读的 Agent View 列表
 git worktree prune     # 清理已解锁且不再使用的 worktree
+
+# settings.json 常见新增 key（key 名不要翻译）
+# wheelScrollAccelerationEnabled
+# footerLinksRegexes
+# language
+# enforceAvailableModels
 ```
 
 ---

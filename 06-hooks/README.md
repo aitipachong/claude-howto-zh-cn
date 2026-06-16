@@ -83,6 +83,53 @@ hooks 最大的价值，是把“你本来每次都要手动做的检查”变�
 
 ---
 
+## 用 `if` 按工具参数继续收窄匹配
+
+`matcher` 负责匹配工具名，例如 `"Write"`、`"Edit|Write"` 或 `"*"`。
+从 `v2.1.172+` 起，如果你还想按工具参数继续过滤，比如只在修改 `src/` 目录时跑 lint，或只在读取 `.env` 时做拦截，可以在具体 hook handler 上加 `if`。
+
+`if` 使用 permission-rule 语法，也就是 `ToolName(pattern)` 这种形式。常见例子：
+
+- `Edit(src/**)`：只匹配 `src/` 下的编辑
+- `Read(.env)`：匹配当前目录及子目录里的 `.env`
+- `Read(~/.ssh/**)`：匹配用户 SSH 目录读取
+- `Bash(git push *)`：只匹配 `git push` 相关命令
+
+注意位置：`if` 是 `hooks` 数组里某个 handler 的字段，和 `type`、`command` 同级，不是写在 `matcher` 上。
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Edit(src/**)",
+            "command": "./hooks/lint-src.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Read(.env)",
+            "command": "./hooks/block-secret-read.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+这里的 `if`、`matcher`、`type`、`command` 都是配置 key，不能为了中文化改名。
+
+---
+
 ## matcher 怎么用
 
 | 形式 | 含义 | 例子 |

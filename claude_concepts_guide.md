@@ -14,7 +14,7 @@
 
 可复用、可自动触发的能力，适合沉淀稳定工作流。
 
-`v2.1.170` 这轮同步后，特别值得关注这些 bundled skills、plugin 和排障入口：
+`v2.1.176` 这轮同步后，特别值得关注这些 bundled skills、plugin 和排障入口：
 
 - `/run`：启动当前项目，确认改动能真实运行
 - `/verify`：构建、运行并观察应用，确认修复不是只停留在测试通过
@@ -30,6 +30,8 @@
 
 用于复杂任务拆分和专业分工的子代理。
 
+从 `v2.1.172+` 起，subagent 可以再 spawn 子 subagent，最多嵌套 5 层；如果要限制可 spawn 的对象，保留 `Agent(agent_type)` 语法，不要翻译成中文字段。
+
 ## 5. MCP（外部工具协议）
 
 让 Claude 连接外部工具和实时数据的协议。
@@ -37,6 +39,8 @@
 ## 6. Hooks（钩子）
 
 在特定事件上自动执行动作的机制。
+
+从 `v2.1.172+` 起，hook handler 可以加 `if` 条件，用 `Edit(src/**)`、`Read(.env)`、`Bash(git push *)` 这类 permission-rule 语法按工具参数继续收窄匹配。
 
 这轮同步移除了上一版里关于 `Stop` / `SubagentStop` 可读取 `background_tasks`、`session_crons` 的说明；当前官方 hooks reference 没有列出这两个字段，写 hook 时不要依赖它们。
 
@@ -58,6 +62,8 @@ Claude Code 的核心使用入口，也是自动化、脚本化和 CI/CD 的关�
 
 `/usage` 的成本页现在会按 skills、subagents、plugins、MCP server 等类别拆分，排查“钱花在哪里”会更直观。
 
+`v2.1.174+` 的 VSCode Account & usage 视图还会显示 cache miss、long-context cost、subagents，以及 per-skill / per-agent / per-plugin / per-MCP 归因。
+
 `/workflows` 可以查看 dynamic workflows 的运行记录，适合大规模审查、迁移、全仓扫描这类需要多代理编排的任务。
 
 `v2.1.160` 起，dynamic workflows 的触发关键词是 `ultracode`；裸词 `workflow` 不再触发运行。
@@ -65,3 +71,5 @@ Claude Code 的核心使用入口，也是自动化、脚本化和 CI/CD 的关�
 `/model` 的默认行为也要注意：`v2.1.153+` 起选择模型会保存为后续 session 默认值；如果只想作用于当前 session，选中后按 `s`。
 
 `--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1` 适合排查自定义配置问题；`fallbackModel` 适合给主模型不可用时准备有序 fallback。
+
+`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language` 是 settings.json 里的 key，说明文字可以中文化，但 key 本身不要翻译。

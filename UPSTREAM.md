@@ -5,7 +5,7 @@
 - 上游仓库：[`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto)
 - 上游分支：`main`
 - 本地化基线 commit：`0ca8c37c81918458e063739425c4740ca92c2db2`
-- 最近检查到的上游 commit：`733c0882c3a83db86ce279759659c9c76fafe172`
+- 最近检查到的上游 commit：`ae656f6fb82ec683446ae53f3eb77d9e3909febf`
 - 上游许可证：[MIT License](LICENSE)
 
 ## 本仓库性质
@@ -61,6 +61,25 @@ uv run python scripts/validate_localization.py
    - 哪些内容暂时未同步
 
 ## 最近一次同步记录
+
+### 上游同步 — 2026-06-16
+
+- Reviewed upstream range: `733c088` → `ae656f6`
+- 重点上游变化：
+  - Claude Code 教程覆盖更新到 `v2.1.176`
+  - 从 `v2.1.172` 起，subagent 可以继续 spawn 子 subagent，最多嵌套 5 层；可用 `Agent(agent_type)` 限制可 spawn 的 subagent 类型
+  - hooks 支持在 hook handler 上使用 `if` 条件，通过 permission-rule 语法按工具参数进一步过滤匹配
+  - `/plugin` marketplace 浏览界面新增搜索栏，便于在大型 marketplace 中按名称或关键词过滤 plugin
+  - 新增或更新 settings key：`enforceAvailableModels`、`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language`
+  - VSCode Account & usage 视图补充 cache miss、long-context cost、subagents 以及 per-skill / per-agent / per-plugin / per-MCP 归因
+  - 上游新增 `.gitissue.yml`，并修正 `scripts/check_links.py` 对 `footerLinksRegexes` 正则示例的 URL 误报
+- Chinese fork actions:
+  - 将影响真实使用的 subagent、hook、plugin、settings、CLI 和 usage 说明同步进中文主线文档
+  - 保留 `Agent(agent_type)`、`if`、`matcher`、`enforceAvailableModels`、`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language` 等可执行标识原文
+  - 本仓库当前没有上游 `scripts/check_links.py`，CI 使用 `.github/markdown-link-check-config.json`；因此未新增该脚本，仅确保中文文档中的 `footerLinksRegexes` 示例可由现有检查覆盖
+  - 上游 `.gitissue.yml` 属于上游 PR traceability 配置，本中文 fork 不向上游开 PR，也不采用相同检查流程，因此未引入
+  - 不引入上游英文根 README，继续维护 `lhfer/claude-howto-zh-cn` 的中文默认入口
+  - 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
 
 ### 上游同步 — 2026-06-12
 

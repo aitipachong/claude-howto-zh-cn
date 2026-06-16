@@ -20,13 +20,14 @@
 
 ## 最近同步
 
-- **最近同步日期**：2026-06-12
-- **本轮参考范围**：`fcdc088` -> `733c088`
+- **最近同步日期**：2026-06-16
+- **本轮参考范围**：`733c088` -> `ae656f6`
 - **本次同步内容**：
-  - 同步 Claude Code `v2.1.170` 口径，覆盖 `v2.1.161` 到 `v2.1.170` 的增量文档
-  - 补充 `/cd <path>`、`--safe-mode` / `CLAUDE_CODE_SAFE_MODE=1`、`fallbackModel`、`disableBundledSkills` 等新增配置和排查入口
-  - 说明 `/plugin list --enabled` / `--disabled`、Stop / SubagentStop hook 的 `hookSpecificOutput.additionalContext`、MCP stdio 的 `CLAUDE_CODE_SESSION_ID`
-  - 记录 `--fallback-model` 已适用于交互式 session，并补充 `claude-fable-5` 模型标识
+  - 同步 Claude Code `v2.1.176` 口径，覆盖 `v2.1.172` 到 `v2.1.176` 的增量文档
+  - 补充 subagent 最多 5 层嵌套 spawn、`Agent(agent_type)` 限制语法，以及 hooks 的 `if` 条件过滤
+  - 说明 `/plugin` marketplace 搜索栏、`enforceAvailableModels`、`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language`
+  - 记录 VSCode Account & usage 视图新增的 cache miss、long-context cost、subagents 与 skill / agent / plugin / MCP 归因拆分
+  - 审阅上游 `.gitissue.yml` 和 `scripts/check_links.py` 变化；本仓库当前 CI 与追踪配置不同，未为此新增英文上游配置
   - 继续保持根目录中文主线，不把上游英文 README 覆盖到中文首页
 
 ---

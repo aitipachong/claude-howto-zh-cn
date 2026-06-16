@@ -350,6 +350,12 @@ manifest 顶层可以加一个 `monitors` 字段，例如：
 - `hostPattern`
 - `pathPattern`
 
+### 2. `/plugin` marketplace 页面支持搜索
+
+从 `v2.1.172+` 起，`/plugin` 里的 marketplace 浏览界面有搜索栏，可以按 plugin 名称或关键词快速过滤。
+
+如果你们团队维护的 marketplace 很大，中文 README 里建议把 plugin 的用途关键词写清楚，方便读者搜索到正确插件。
+
 ### plugin command 现在支持空格写法
 
 从 `v2.1.136+` 开始，plugin slash command 不只认冒号写法：

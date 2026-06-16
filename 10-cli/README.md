@@ -165,6 +165,26 @@ claude --append-system-prompt "Always explain tradeoffs" "review this plan"
 - `ANTHROPIC_BASE_URL` 指向兼容网关时，`/model` 不再默认自动发现远端模型；现在需要显式设置 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`
 - `claude auth login` 在浏览器 callback 打不回 localhost 时，可以把 OAuth code 粘回终端继续登录
 
+### settings.json 里新增的几个 key
+
+这些不是 CLI flag，也不是环境变量，而是放在 `~/.claude/settings.json`、`.claude/settings.json` 或托管 settings 里的配置 key。key 名保持英文，说明文字可以中文化。
+
+| key | 用途 |
+|-----|------|
+| `wheelScrollAccelerationEnabled` | 从 `v2.1.174+` 起可设为 `false`，关闭全屏 renderer 里的鼠标滚轮加速 |
+| `footerLinksRegexes` | 从 `v2.1.176+` 起可配置正则数组，把匹配到的链接显示成 footer badges |
+| `language` | 设置 Claude Code 偏好的回复语言和语音听写语言；从 `v2.1.176+` 起，自动生成的 session title 也会按这个语言固定 |
+
+示例：
+
+```json
+{
+  "wheelScrollAccelerationEnabled": false,
+  "language": "french",
+  "footerLinksRegexes": [".*jira\\.example\\.com/.*"]
+}
+```
+
 ---
 
 ## 这轮 CLI 更新里，最值得你知道的一个新 flag

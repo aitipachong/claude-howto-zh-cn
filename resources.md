@@ -37,5 +37,12 @@
 | `EnterWorktree` | 在同一 session 中切换 Claude 管理的 worktree | [Advanced Features](09-advanced-features/) |
 | `claude agents` 里的 `Ctrl+T` | 固定后台 session，空闲时优先保留 | [CLI Guide](10-cli/) |
 | `allowAllClaudeAiMcps` | 组织级允许加载 claude.ai 云端 MCP connectors 的托管设置 | [MCP Guide](05-mcp/) |
+| `Agent(agent_type)` | 限制 subagent 能 spawn 哪些子 subagent；`v2.1.172+` 最多支持 5 层嵌套 | [Subagents Guide](04-subagents/) |
+| hook `if` 条件 | 用 permission-rule 语法按工具参数继续收窄 hook 匹配 | [Hooks Guide](06-hooks/) |
+| `/plugin` marketplace 搜索栏 | 在 marketplace 浏览界面按名称或关键词过滤 plugin | [Plugins Guide](07-plugins/) |
+| `enforceAvailableModels` | 托管策略强制 `availableModels` 也约束 Default model | [Advanced Features](09-advanced-features/) |
+| `wheelScrollAccelerationEnabled` | 关闭全屏 renderer 的鼠标滚轮加速 | [CLI Guide](10-cli/) |
+| `footerLinksRegexes` | 把匹配正则的链接显示成 footer badges | [CLI Guide](10-cli/) |
+| `language` | 设置回复、语音听写和自动 session title 的偏好语言 | [CLI Guide](10-cli/) |
 
 这些名称都是可执行标识或协议字段，不要翻译成中文 key。
