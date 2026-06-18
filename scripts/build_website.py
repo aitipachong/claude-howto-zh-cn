@@ -38,7 +38,6 @@ from __future__ import annotations
 import argparse
 import html
 import logging
-import os
 import re
 import shutil
 import sys
@@ -51,7 +50,12 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from vendor_assets import build_tailwind_css, fetch_fonts, fetch_mermaid, write_vendor_manifest
+from vendor_assets import (
+    build_tailwind_css,
+    fetch_fonts,
+    fetch_mermaid,
+    write_vendor_manifest,
+)
 
 REPO_URL = "https://github.com/luongnv89/claude-howto"
 DEFAULT_BRANCH = "main"
@@ -135,6 +139,7 @@ class PageInfo:
     title: str
     section: str
     is_section_index: bool = False
+    content: str | None = None
 
 
 @dataclass
@@ -190,18 +195,29 @@ def collect_folder_markdown(folder: Path) -> list[Path]:
 
 
 def is_excluded_top_level_markdown(name: str) -> bool:
-    return name in EXCLUDE_TOP_LEVEL or any(name.startswith(prefix) for prefix in EXCLUDE_TOP_LEVEL_PREFIXES)
+    return name in EXCLUDE_TOP_LEVEL or any(
+        name.startswith(prefix) for prefix in EXCLUDE_TOP_LEVEL_PREFIXES
+    )
 
 
-def derive_page_title(md_path: Path, default: str) -> str:
+def read_source(md_path: Path) -> str | None:
     try:
-        content = md_path.read_text(encoding="utf-8")
+        return md_path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
+        return None
+
+
+def title_from_content(content: str | None, default: str) -> str:
+    if content is None:
         return default
     match = re.search(r"^#\s+(.+?)\s*$", content, flags=re.MULTILINE)
     if match:
         return match.group(1).strip()
     return default
+
+
+def derive_page_title(md_path: Path, default: str) -> str:
+    return title_from_content(read_source(md_path), default)
 
 
 def source_to_site_url(rel_source: str) -> str:
@@ -245,7 +261,8 @@ def collect_pages(config: WebsiteConfig, logger: logging.Logger) -> BuildState:
             if is_excluded_top_level_markdown(item) or item in seen:
                 continue
             seen.add(item)
-            page_title = derive_page_title(item_path, display_name)
+            content = read_source(item_path)
+            page_title = title_from_content(content, display_name)
             url = _disambiguate_url(source_to_site_url(item), used_urls, item)
             used_urls.add(url.lower())
             state.pages.append(
@@ -256,6 +273,7 @@ def collect_pages(config: WebsiteConfig, logger: logging.Logger) -> BuildState:
                     title=page_title,
                     section=display_name,
                     is_section_index=True,
+                    content=content,
                 )
             )
         elif item_path.is_dir():
@@ -266,7 +284,10 @@ def collect_pages(config: WebsiteConfig, logger: logging.Logger) -> BuildState:
                     continue
                 seen.add(rel)
                 is_index = md.name == "README.md" and md.parent == item_path
-                title = derive_page_title(md, display_name if is_index else md.stem)
+                content = read_source(md)
+                title = title_from_content(
+                    content, display_name if is_index else md.stem
+                )
                 url = _disambiguate_url(source_to_site_url(rel), used_urls, rel)
                 used_urls.add(url.lower())
                 state.pages.append(
@@ -277,6 +298,7 @@ def collect_pages(config: WebsiteConfig, logger: logging.Logger) -> BuildState:
                         title=title,
                         section=display_name,
                         is_section_index=is_index,
+                        content=content,
                     )
                 )
         else:
@@ -288,7 +310,8 @@ def collect_pages(config: WebsiteConfig, logger: logging.Logger) -> BuildState:
             continue
         seen.add(rel)
         title_default = md.stem.replace("-", " ").replace("_", " ").title()
-        title = derive_page_title(md, title_default)
+        content = read_source(md)
+        title = title_from_content(content, title_default)
         url = _disambiguate_url(source_to_site_url(rel), used_urls, rel)
         used_urls.add(url.lower())
         state.pages.append(
@@ -299,6 +322,7 @@ def collect_pages(config: WebsiteConfig, logger: logging.Logger) -> BuildState:
                 title=title,
                 section="Additional Docs",
                 is_section_index=False,
+                content=content,
             )
         )
 
@@ -423,15 +447,13 @@ def _rewrite_asset_ref(
     element[attr] = relative_link(page.output_url, target)  # type: ignore[index]
 
 
-def rewrite_links(
-    html_content: str,
+def rewrite_links_in_soup(
+    soup: BeautifulSoup,
     page: PageInfo,
     state: BuildState,
     config: WebsiteConfig,
     logger: logging.Logger,
-) -> str:
-    soup = BeautifulSoup(html_content, "html.parser")
-
+) -> None:
     for a in soup.find_all("a"):
         _rewrite_anchor(a, page, state, config, logger)
 
@@ -443,12 +465,20 @@ def rewrite_links(
     for source in soup.find_all("source"):
         _rewrite_asset_ref(source, "srcset", source.get("srcset", ""), page, config)
 
+
+def rewrite_links(
+    html_content: str,
+    page: PageInfo,
+    state: BuildState,
+    config: WebsiteConfig,
+    logger: logging.Logger,
+) -> str:
+    soup = BeautifulSoup(html_content, "html.parser")
+    rewrite_links_in_soup(soup, page, state, config, logger)
     return str(soup)
 
 
-def normalise_heading_ids(html_content: str) -> str:
-    """Force GitHub-style anchor ids on every heading."""
-    soup = BeautifulSoup(html_content, "html.parser")
+def normalise_heading_ids_in_soup(soup: BeautifulSoup) -> None:
     used: dict[str, int] = {}
     for level in ("h1", "h2", "h3", "h4", "h5", "h6"):
         for h in soup.find_all(level):
@@ -460,12 +490,16 @@ def normalise_heading_ids(html_content: str) -> str:
             final = anchor if count == 0 else f"{anchor}-{count}"
             used[anchor] = count + 1
             h["id"] = final
+
+
+def normalise_heading_ids(html_content: str) -> str:
+    """Force GitHub-style anchor ids on every heading."""
+    soup = BeautifulSoup(html_content, "html.parser")
+    normalise_heading_ids_in_soup(soup)
     return str(soup)
 
 
-def extract_toc(html_content: str) -> list[dict[str, str]]:
-    """Pull H2/H3 headings into a flat list for in-page navigation."""
-    soup = BeautifulSoup(html_content, "html.parser")
+def extract_toc_from_soup(soup: BeautifulSoup) -> list[dict[str, str]]:
     toc: list[dict[str, str]] = []
     for h in soup.find_all(["h2", "h3"]):
         anchor = h.get("id")
@@ -475,15 +509,26 @@ def extract_toc(html_content: str) -> list[dict[str, str]]:
     return toc
 
 
-def render_markdown(md_content: str) -> str:
-    """Convert markdown to HTML using the same extensions as the EPUB build."""
+def extract_toc(html_content: str) -> list[dict[str, str]]:
+    """Pull H2/H3 headings into a flat list for in-page navigation."""
+    return extract_toc_from_soup(BeautifulSoup(html_content, "html.parser"))
+
+
+def render_markdown_to_soup(md_content: str) -> BeautifulSoup:
     md_content = replace_mermaid_blocks(md_content)
     html_content = markdown.markdown(
         md_content,
         extensions=["tables", "fenced_code", "codehilite", "toc"],
         extension_configs={"codehilite": {"guess_lang": False}},
     )
-    return normalise_heading_ids(html_content)
+    soup = BeautifulSoup(html_content, "html.parser")
+    normalise_heading_ids_in_soup(soup)
+    return soup
+
+
+def render_markdown(md_content: str) -> str:
+    """Convert markdown to HTML using the same extensions as the EPUB build."""
+    return str(render_markdown_to_soup(md_content))
 
 
 ASSET_EXTENSIONS = {
@@ -497,16 +542,17 @@ ASSET_EXTENSIONS = {
 }
 
 
-def copy_assets(config: WebsiteConfig, state: BuildState, logger: logging.Logger) -> None:
+def copy_assets(
+    config: WebsiteConfig, state: BuildState, logger: logging.Logger
+) -> None:
     """Copy images referenced by any rendered page into `<output>/assets/`."""
     assets_dir = config.output_path / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
     copied: set[Path] = set()
 
     for page in state.pages:
-        try:
-            content = page.source.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        content = page.content if page.content is not None else read_source(page.source)
+        if content is None:
             continue
         for match in re.finditer(r"!\[[^\]]*\]\(([^)]+)\)", content):
             src = match.group(1).split(" ", 1)[0]
@@ -543,8 +589,8 @@ def copy_assets(config: WebsiteConfig, state: BuildState, logger: logging.Logger
     logger.info(f"Copied {len(copied)} asset file(s) into {assets_dir}")
 
 
-def build_navigation(state: BuildState, current_url: str) -> list[dict[str, object]]:
-    """Group pages into the sidebar navigation tree, rooted at `current_url`."""
+def build_nav_skeleton(state: BuildState) -> list[dict[str, object]]:
+    """Group pages into sidebar sections once, then localize per page."""
     sections: list[dict[str, object]] = []
     section_map: dict[str, dict[str, object]] = {}
 
@@ -557,16 +603,33 @@ def build_navigation(state: BuildState, current_url: str) -> list[dict[str, obje
 
         items = section["items"]
         assert isinstance(items, list)
-        items.append(
-            {
-                "title": page.title,
-                "url": relative_link(current_url, page.output_url),
-                "is_current": page.output_url == current_url,
-                "is_index": page.is_section_index,
-            }
-        )
+        items.append(page)
 
     return sections
+
+
+def localize_nav(
+    skeleton: list[dict[str, object]], current_url: str
+) -> list[dict[str, object]]:
+    localized: list[dict[str, object]] = []
+    for section in skeleton:
+        pages = section["items"]
+        assert isinstance(pages, list)
+        localized.append(
+            {
+                "name": section["name"],
+                "items": [
+                    {
+                        "title": page.title,
+                        "url": relative_link(current_url, page.output_url),
+                        "is_current": page.output_url == current_url,
+                        "is_index": page.is_section_index,
+                    }
+                    for page in pages
+                ],
+            }
+        )
+    return localized
 
 
 def render_pages(
@@ -578,17 +641,22 @@ def render_pages(
     """Render each markdown page into `<output>/<output_url>`."""
     template = env.get_template("page.html.j2")
     total = len(state.pages)
+    nav_skeleton = build_nav_skeleton(state)
 
     for idx, page in enumerate(state.pages):
-        nav = build_navigation(state, page.output_url)
-        try:
-            md_content = page.source.read_text(encoding="utf-8")
-        except UnicodeDecodeError as exc:
-            raise RuntimeError(f"Failed to read {page.source}: {exc}") from exc
+        nav = localize_nav(nav_skeleton, page.output_url)
+        if page.content is not None:
+            md_content = page.content
+        else:
+            try:
+                md_content = page.source.read_text(encoding="utf-8")
+            except UnicodeDecodeError as exc:
+                raise RuntimeError(f"Failed to read {page.source}: {exc}") from exc
 
-        html_content = render_markdown(md_content)
-        html_content = rewrite_links(html_content, page, state, config, logger)
-        toc = extract_toc(html_content)
+        soup = render_markdown_to_soup(md_content)
+        toc = extract_toc_from_soup(soup)
+        rewrite_links_in_soup(soup, page, state, config, logger)
+        html_content = str(soup)
 
         prev_page = state.pages[idx - 1] if idx > 0 else None
         next_page = state.pages[idx + 1] if idx < total - 1 else None

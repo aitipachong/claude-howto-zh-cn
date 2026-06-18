@@ -14,7 +14,7 @@
 
 可复用、可自动触发的能力，适合沉淀稳定工作流。
 
-`v2.1.176` 这轮同步后，特别值得关注这些 bundled skills、plugin 和排障入口：
+`v2.1.179` 这轮同步后，特别值得关注这些 bundled skills、plugin 和排障入口：
 
 - `/run`：启动当前项目，确认改动能真实运行
 - `/verify`：构建、运行并观察应用，确认修复不是只停留在测试通过
@@ -25,12 +25,16 @@
 - `disableBundledSkills` / `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS=1`：隐藏内置 skills、workflows 和 commands
 - `claude plugin init <name>`：在 `.claude/skills` 中脚手架本地 plugin，放在该目录的 plugin 会自动加载
 - `/plugin list --enabled` / `--disabled`：按启用状态查看 installed plugins
+- `/doctor`：诊断安装、配置和 plugin 健康状态；`v2.1.178+` 起界面是 flat tree 布局
+- `/bug`：提交反馈；`v2.1.178+` 起必须填写描述
 
 ## 4. Subagents（子代理）
 
 用于复杂任务拆分和专业分工的子代理。
 
 从 `v2.1.172+` 起，subagent 可以再 spawn 子 subagent，最多嵌套 5 层；如果要限制可 spawn 的对象，保留 `Agent(agent_type)` 语法，不要翻译成中文字段。
+
+从 `v2.1.178+` 起，嵌套 `.claude/agents/` 里的同名 agent 会按“离当前工作目录最近者优先”加载；workflow 和 output-style 定义也遵循这个规则。
 
 ## 5. MCP（外部工具协议）
 
@@ -41,6 +45,8 @@
 在特定事件上自动执行动作的机制。
 
 从 `v2.1.172+` 起，hook handler 可以加 `if` 条件，用 `Edit(src/**)`、`Read(.env)`、`Bash(git push *)` 这类 permission-rule 语法按工具参数继续收窄匹配。
+
+从 `v2.1.178+` 起，permission rule 还可以用 `Tool(param:value)` 形式按工具输入参数匹配。这个语法本身不要翻译。
 
 这轮同步移除了上一版里关于 `Stop` / `SubagentStop` 可读取 `background_tasks`、`session_crons` 的说明；当前官方 hooks reference 没有列出这两个字段，写 hook 时不要依赖它们。
 

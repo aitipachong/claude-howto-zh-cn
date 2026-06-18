@@ -44,5 +44,10 @@
 | `wheelScrollAccelerationEnabled` | 关闭全屏 renderer 的鼠标滚轮加速 | [CLI Guide](10-cli/) |
 | `footerLinksRegexes` | 把匹配正则的链接显示成 footer badges | [CLI Guide](10-cli/) |
 | `language` | 设置回复、语音听写和自动 session title 的偏好语言 | [CLI Guide](10-cli/) |
+| `/doctor` | 诊断安装、配置和 plugin 健康；`v2.1.178+` 起是 flat tree 布局 | [Slash Commands](01-slash-commands/) |
+| `/bug` | 提交反馈；`v2.1.178+` 起必须填写描述 | [Slash Commands](01-slash-commands/) |
+| `Tool(param:value)` | permission rule 按工具输入参数继续细化匹配 | [CLI Guide](10-cli/) |
+| 嵌套 `.claude/agents/` 最近目录优先 | monorepo 中同名 agent 采用离当前目录最近的定义 | [Subagents Guide](04-subagents/) |
+| remote session plugin loading | remote session 里的 plugin 加载性能在 `v2.1.179+` 改进 | [Plugins Guide](07-plugins/) |
 
 这些名称都是可执行标识或协议字段，不要翻译成中文 key。

@@ -45,6 +45,8 @@ slash commands 是用户在 Claude Code 里主动输入的快捷操作，例如 
 | `/hooks` | 查看 hooks |
 | `/mcp` | 查看或管理 MCP servers |
 | `/plugin` | 管理 plugins |
+| `/doctor` | 诊断安装、配置和 plugin 健康；`v2.1.178+` 起是 flat tree 布局 |
+| `/feedback` / `/bug` | 提交反馈；`/bug` 从 `v2.1.178+` 起必须填写描述 |
 | `/plan` | 进入 planning mode |
 | `/proactive` | `/loop` 的别名 |
 | `/recap` | 返回旧 session 时快速回顾上下文 |
@@ -102,6 +104,8 @@ permission modes 决定 Claude Code 在使用工具时需要多大授权。
 subagents 是专门负责某类任务的子代理。它们适合复杂任务拆分，比如“一个做代码审查，一个做测试，一个做文档”。
 
 从 `v2.1.172+` 起，subagent 可以再 spawn 子 subagent，最多嵌套 5 层。需要限制可 spawn 对象时，保留 `Agent(agent_type)` 语法，不要翻译或改名。
+
+从 `v2.1.178+` 起，嵌套 `.claude/agents/` 的同名 agent 采用最近目录优先；workflow 和 output-style 定义也遵循同样规则。
 
 ### 常见内建 subagents
 
@@ -212,6 +216,8 @@ plugin-name/
 从 `v2.1.157` 起，可以用 `claude plugin init <name>` 在 `.claude/skills` 中创建本地 plugin；该目录下的 plugin 会自动加载，不需要 marketplace。
 
 从 `v2.1.172+` 起，`/plugin` marketplace 浏览界面支持搜索栏，适合团队 marketplace 规模变大后快速过滤 plugin。
+
+从 `v2.1.179+` 起，remote session 里的 plugin loading performance 有改进。
 
 ---
 
@@ -340,6 +346,11 @@ memory 是 Claude Code 用来长期加载规则和上下文的机制。
 - `wheelScrollAccelerationEnabled`
 - `footerLinksRegexes`
 - `language`
+- `/doctor` flat tree 布局
+- `/bug` 必须填写描述
+- `Tool(param:value)` permission rule 参数匹配
+- 嵌套 `.claude/agents/` 最近目录优先
+- remote session plugin loading performance 改进
 - `claude plugin init <name>`
 - `CLAUDE_CODE_ENABLE_AUTO_MODE=1`
 - `EnterWorktree`

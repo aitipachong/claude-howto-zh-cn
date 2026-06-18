@@ -2,6 +2,29 @@
 
 > 本文件保留上游版本信息的时间顺序，但用中文补充阅读说明，方便中文用户快速判断“这个仓库最近同步了什么”。
 
+## 中文版同步 — 2026-06-18
+
+### 上游审阅
+
+- 核对上游范围：`ae656f6` → `8143e37`
+- 上游这轮重点：
+  - 同步 Claude Code `v2.1.179`，覆盖 `v2.1.178` 到 `v2.1.179` 的新增文档
+  - `/doctor` 改为 flat tree 布局，并强化状态图标
+  - `/bug` 必须填写描述后才能提交
+  - 嵌套 `.claude/agents/`、workflow 和 output-style 定义采用“最近目录优先”
+  - permission rules 支持 `Tool(param:value)` 参数匹配
+  - remote session plugin loading performance 提升
+  - 网站构建脚本改为 single-parse / cached source / shared nav skeleton
+  - Pages workflow 增加 uv cache 和 vendor assets cache
+
+### 中文 fork 处理
+
+- 将 slash command、subagent 优先级、permission rule、plugin 和 CLI 的行为变化改写进中文主线文档
+- 保留 `/doctor`、`/bug`、`.claude/agents/`、`Tool(param:value)`、`Bash(...)`、`Read(...)` 等可执行标识原文
+- 同步 `scripts/build_website.py` 的性能优化和 Pages 缓存配置，但保留本仓库发布后中文首页验证步骤
+- 不引入上游英文根 README，不改变中文首页结构
+- 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
+
 ## 中文版同步 — 2026-06-16
 
 ### 上游审阅

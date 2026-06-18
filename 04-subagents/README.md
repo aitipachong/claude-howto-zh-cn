@@ -80,6 +80,14 @@ subagent 具备这些特点：
 
 如果你在团队项目里发现“明明本机有一个同名 agent，但项目里表现不一样”，优先检查 `.claude/agents/` 是否覆盖了它。
 
+### 嵌套 `.claude/agents/`：最近目录优先
+
+从 `v2.1.178+` 起，如果 monorepo 里多个嵌套 `.claude/agents/` 都定义了同名 agent，Claude Code 会优先使用离当前工作目录最近的定义。
+
+这条规则也适用于嵌套 workflow 和 output-style 定义。对中国用户来说，一个实用判断是：你在哪个 package / 子目录里启动 Claude Code，就先看离那里最近的 `.claude/`。
+
+这里的 `.claude/agents/`、workflow、output-style 都是路径或能力标识，不要为了中文化改名。
+
 ---
 
 ## 文件格式长什么样

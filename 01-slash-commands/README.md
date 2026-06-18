@@ -37,6 +37,8 @@ Claude Code 里的 slash commands 大致分四类：
 | `/clear` | 清空当前会话 |
 | `/config` | 查看或编辑设置 |
 | `/context` | 看上下文使用情况 |
+| `/doctor` | 诊断安装、配置和 plugin 健康状态；`v2.1.178+` 起界面改成 flat tree，状态图标更清楚 |
+| `/feedback` / `/bug` | 提交反馈；`v2.1.178+` 起 `/bug` 必须填写描述后才能提交 |
 | `/model` | 切换模型；`v2.1.153+` 起默认保存为后续 session 默认值，选择后按 `s` 才只作用于当前 session |
 | `/effort [low|medium|high|xhigh|max|auto]` | 用交互滑杆调整思考强度；Opus 4.8 默认是 `high`，`xhigh` 适用于 Opus 4.8 / 4.7 |
 | `/agents` | 查看可用 agents |
@@ -186,6 +188,8 @@ cp 01-slash-commands/optimize.md .claude/commands/
 - `/reload-skills` 新增，用来重新扫描 skill 目录
 - `/workflows` 新增，用来查看 dynamic workflows 的运行记录
 - `/simplify` 在 `v2.1.154+` 后重新成为独立的清理型命令；如果要找正确性缺陷，仍然用 `/code-review`
+- `/doctor` 在 `v2.1.178+` 刷新为 flat tree 布局，状态图标更容易扫读
+- `/bug` 在 `v2.1.178+` 需要先写描述，避免空反馈误提交
 
 ---
 

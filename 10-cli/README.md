@@ -164,6 +164,8 @@ claude --append-system-prompt "Always explain tradeoffs" "review this plan"
 - 只读型 Bash / Glob 调用的权限提示比以前更安静
 - `ANTHROPIC_BASE_URL` 指向兼容网关时，`/model` 不再默认自动发现远端模型；现在需要显式设置 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`
 - `claude auth login` 在浏览器 callback 打不回 localhost 时，可以把 OAuth code 粘回终端继续登录
+- `/doctor` 在 `v2.1.178+` 改成 flat tree 布局，状态图标更清晰
+- `/bug` 在 `v2.1.178+` 必须填写描述后才能提交
 
 ### settings.json 里新增的几个 key
 
@@ -256,6 +258,20 @@ claude -p "Run tests" --permission-mode dontAsk
 # 限制工具范围
 claude -p --tools "Read,Grep,Glob" "find all TODO comments"
 ```
+
+### permission rule 可以按参数匹配
+
+从 `v2.1.178+` 起，permission rules 除了 `Tool` 或 `Tool(pattern)`，还可以用 `Tool(param:value)` 形式按工具输入参数继续细化匹配，并支持通配。
+
+这和你已经熟悉的 `Bash(...)`、`Read(...)` 是同一类安全边界，只是匹配粒度更细。例子：
+
+```text
+Bash(npm run test *)
+Read(./.env.*)
+Tool(param:value)
+```
+
+真实项目里不要凭空猜参数名，先查当前版本的 permissions / settings reference。这里的 `Tool(param:value)`、`Bash(...)`、`Read(...)` 都是规则语法，不能翻译。
 
 ---
 

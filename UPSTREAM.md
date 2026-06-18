@@ -5,7 +5,7 @@
 - 上游仓库：[`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto)
 - 上游分支：`main`
 - 本地化基线 commit：`0ca8c37c81918458e063739425c4740ca92c2db2`
-- 最近检查到的上游 commit：`ae656f6fb82ec683446ae53f3eb77d9e3909febf`
+- 最近检查到的上游 commit：`8143e378ef4f1b243a7cfc555df7ddfd45440960`
 - 上游许可证：[MIT License](LICENSE)
 
 ## 本仓库性质
@@ -61,6 +61,26 @@ uv run python scripts/validate_localization.py
    - 哪些内容暂时未同步
 
 ## 最近一次同步记录
+
+### 上游同步 — 2026-06-18
+
+- Reviewed upstream range: `ae656f6` → `8143e37`
+- 重点上游变化：
+  - Claude Code 教程覆盖更新到 `v2.1.179`
+  - `/doctor` 布局刷新为 flat tree，状态图标更清晰
+  - `/bug` 现在必须填写描述后才能提交
+  - 嵌套 `.claude/agents/`、workflow 和 output-style 定义采用“离当前工作目录最近者优先”规则
+  - permission rules 支持 `Tool(param:value)` 形式，按工具输入参数继续细化匹配
+  - remote session 里的 plugin loading performance 有改进
+  - `scripts/build_website.py` 改为缓存 Markdown 源文本、复用 HTML 解析树和导航骨架，减少重复解析
+  - `.github/workflows/pages.yml` 增加 uv cache 与 vendor assets cache
+- Chinese fork actions:
+  - 将影响真实使用的 slash command、subagent precedence、permission rule、plugin 和 CLI 说明同步进中文主线文档
+  - 保留 `/doctor`、`/bug`、`.claude/agents/`、`Tool(param:value)`、`Bash(...)`、`Read(...)`、`scripts/.vendor-cache` 等可执行标识原文
+  - 同步网站构建脚本性能优化，但不为中文化改名 Python 函数、YAML key 或 workflow action
+  - 合入 Pages 缓存配置，同时保留本中文 fork 既有的发布后首页验证步骤
+  - 不引入上游英文根 README，继续维护 `lhfer/claude-howto-zh-cn` 的中文默认入口
+  - 更新 `README.md`、`UPSTREAM.md` 和 `CHANGELOG.md` 的最近同步记录
 
 ### 上游同步 — 2026-06-16
 

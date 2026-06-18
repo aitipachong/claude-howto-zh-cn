@@ -20,14 +20,14 @@
 
 ## 最近同步
 
-- **最近同步日期**：2026-06-16
-- **本轮参考范围**：`733c088` -> `ae656f6`
+- **最近同步日期**：2026-06-18
+- **本轮参考范围**：`ae656f6` -> `8143e37`
 - **本次同步内容**：
-  - 同步 Claude Code `v2.1.176` 口径，覆盖 `v2.1.172` 到 `v2.1.176` 的增量文档
-  - 补充 subagent 最多 5 层嵌套 spawn、`Agent(agent_type)` 限制语法，以及 hooks 的 `if` 条件过滤
-  - 说明 `/plugin` marketplace 搜索栏、`enforceAvailableModels`、`wheelScrollAccelerationEnabled`、`footerLinksRegexes`、`language`
-  - 记录 VSCode Account & usage 视图新增的 cache miss、long-context cost、subagents 与 skill / agent / plugin / MCP 归因拆分
-  - 审阅上游 `.gitissue.yml` 和 `scripts/check_links.py` 变化；本仓库当前 CI 与追踪配置不同，未为此新增英文上游配置
+  - 同步 Claude Code `v2.1.179` 口径，覆盖 `v2.1.178` 到 `v2.1.179` 的增量文档
+  - 补充 `/doctor` flat tree 布局刷新、`/bug` 必须填写描述、嵌套 `.claude/` 最近目录优先规则
+  - 说明 permission rule 的 `Tool(param:value)` 参数匹配，以及 remote session 里 plugin 加载性能改进
+  - 同步网站构建脚本的 single-parse 性能优化，并为 GitHub Pages 构建加入 uv / vendor assets 缓存
+  - 保留中文 fork 自己的 Pages 首页验证护栏，不直接覆盖成上游 workflow
   - 继续保持根目录中文主线，不把上游英文 README 覆盖到中文首页
 
 ---

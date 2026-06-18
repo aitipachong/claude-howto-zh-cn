@@ -445,6 +445,12 @@ export FORCE_AUTOUPDATE_PLUGINS=1
 
 这个设置对团队环境特别重要，因为很多人以为“只是在关主程序更新”，实际上也可能顺手把 plugin 自动更新关掉。
 
+### Remote session 里的 plugin 加载更快
+
+从 `v2.1.179+` 起，remote session 里的 plugin loading performance 有改进。
+
+这不是一个新命令，但对团队使用很实际：如果你经常从 claude.ai / remote session 接回本地工作，plugin 可用状态会更快稳定下来。中文文档里只解释效果，`remote session`、`plugin loading performance` 这些原始术语可以保留，方便和官方 changelog 对照。
+
 ## 常见坑
 
 ### 1. 只改 README，不检查 manifest

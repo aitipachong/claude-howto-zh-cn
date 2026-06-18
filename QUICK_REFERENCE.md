@@ -110,6 +110,8 @@ claude plugin init my-plugin
 /usage               # v2.1.149+ 成本视图会按类别拆分
 /code-review high    # 正确性缺陷审查
 /simplify            # 清理型审查并应用修复，不负责找 bug
+/doctor              # 诊断安装、配置和 plugin 健康
+/bug "描述问题"      # v2.1.178+ 必须填写描述
 /reload-skills       # 重新扫描 skill 目录
 /workflows           # 查看 dynamic workflows
 /cd ../backend       # 切换工作目录并尽量保留 prompt cache
@@ -141,6 +143,9 @@ git worktree prune     # 清理已解锁且不再使用的 worktree
 # footerLinksRegexes
 # language
 # enforceAvailableModels
+
+# permission rule 参数匹配示意（语法不要翻译）
+# Tool(param:value)
 ```
 
 ---
