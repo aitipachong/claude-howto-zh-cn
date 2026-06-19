@@ -5,7 +5,7 @@
 - 上游仓库：[`luongnv89/claude-howto`](https://github.com/luongnv89/claude-howto)
 - 上游分支：`main`
 - 本地化基线 commit：`0ca8c37c81918458e063739425c4740ca92c2db2`
-- 最近检查到的上游 commit：`8143e378ef4f1b243a7cfc555df7ddfd45440960`
+- 最近检查到的上游 commit：`8143e37d1b265e6225b9e28be1a795ee6f00e836`
 - 上游许可证：[MIT License](LICENSE)
 
 ## 本仓库性质
